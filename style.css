@@ -112,20 +112,27 @@ header {
 }
 
 .logo {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    letter-spacing: -1.2px;
     display: flex;
     align-items: center;
-    gap: 8px;
     margin: 0;
 }
 
-.logo-icon {
-    font-size: 1.6rem;
-    color: #FFD700; /* More vibrant yellow for Bulb */
-    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+.logo img {
+    height: 45px;
+    width: auto;
+    display: block;
+}
+
+.nav-logo-mobile img {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+.copyright-logo {
+    height: 18px;
+    width: auto;
+    vertical-align: middle;
 }
 
 .menu-toggle {
@@ -327,7 +334,6 @@ nav a {
     .logo {
         position: static;
         transform: none;
-        font-size: 2rem;
     }
     
     nav {
