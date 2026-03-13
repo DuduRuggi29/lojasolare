@@ -1374,7 +1374,8 @@ footer {
     border: 3px solid #1A3C34; /* Matching the brand green */
 }
 
-.gif-box img {
+.gif-box img, 
+.gif-box video {
     width: 100%;
     height: auto;
     display: block;
