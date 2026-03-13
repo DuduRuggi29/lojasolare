@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreio de Pedidos - SOLARE PREMIUM</title>
+    <link rel="stylesheet" href="style.css?v=1.5">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        .policy-container {
+            max-width: 800px;
+            margin: 120px auto 80px;
+            padding: 0 20px;
+            line-height: 1.8;
+            color: #333;
+        }
+        .policy-container h1 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        .policy-container h2 {
+            font-size: 1.5rem;
+            margin: 30px 0 15px;
+            color: var(--primary-color);
+        }
+        .policy-container p {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        .back-home {
+            display: inline-block;
+            margin-bottom: 40px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .tracking-box {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        .tracking-box input {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        .btn-track {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-track:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+    <header class="header" style="background: var(--primary-color); position: fixed; top: 0; width: 100%; z-index: 1000; padding: 15px 0;">
+        <div class="container">
+            <div class="logo" style="color: #fff;">SOLARE <i class="fas fa-lightbulb" style="color: #FFD700;"></i><span class="logo-sub" style="color: var(--accent-color);">PREMIUM</span></div>
+        </div>
+    </header>
+
+    <main class="policy-container">
+        <a href="index.html" class="back-home">← Voltar para a Loja</a>
+        <h1>Rastreio de Pedidos</h1>
+        
+        <p>A transparência é um dos pilares da SOLARE PREMIUM. Como operamos com envio internacional direto, você recebe um código de rastreio mundialmente válido para acompanhar cada etapa do trajeto do seu pedido.</p>
+
+        <div class="tracking-box">
+            <p><strong>Insira seu código de rastreio abaixo:</strong></p>
+            <input type="text" placeholder="Ex: LB123456789HK">
+            <br>
+            <button class="btn-track" onclick="alert('Funcionalidade de rastreio simulada. Em uma loja real, aqui integraria com o webservice dos correios ou parceiro logístico.')">Rastrear Agora</button>
+        </div>
+
+        <h2>Como funciona o rastreio?</h2>
+        <p>Após a confirmação do pagamento (que via Pix ou Cartão acontece na hora), seu pedido entra em fase de processamento e postagem, que leva de 3 a 7 dias úteis. Assim que o código for gerado, ele será enviado automaticamente para o e-mail cadastrado na compra.</p>
+
+        <h2>Onde posso rastrear?</h2>
+        <p>Você pode utilizar o formulário acima ou os canais oficiais:</p>
+        <ul>
+            <li><strong>Correios:</strong> Para pedidos que já entraram no Brasil.</li>
+            <li><strong>17Track / Muambator:</strong> Recomendados para o trajeto internacional completo.</li>
+        </ul>
+
+        <p><strong>Dúvidas?</strong> Nossa equipe de atendimento está à disposição via WhatsApp para ajudar com qualquer atualização do seu status.</p>
+    </main>
+
+    <footer style="background: #0D1F1B; color: #fff; padding: 60px 0 20px;">
+        <div class="container" style="text-align: center;">
+            <div class="logo" style="margin-bottom: 20px;">SOLARE <i class="fas fa-lightbulb" style="color: #FFD700;"></i><span class="logo-sub">PREMIUM</span></div>
+            <p style="opacity: 0.8; font-size: 0.9rem; margin-bottom: 10px;">Rua Herminia Soares, 191, Rio de Janeiro</p>
+            <p style="opacity: 0.6; font-size: 0.9rem;">&copy; 2026 SOLARE PREMIUM - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>
