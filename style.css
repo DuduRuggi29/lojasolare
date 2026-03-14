@@ -1220,8 +1220,8 @@ footer {
         border-radius: 0 !important;
         width: 100% !important;
         height: auto !important;
-        max-height: 350px !important;
-        object-fit: cover !important;
+        max-height: none !important;
+        object-fit: contain !important;
     }
 
     .buy-options {
