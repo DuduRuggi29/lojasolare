@@ -110,11 +110,35 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>CEP</label>
-                    <input type="text" id="addr-cep" placeholder="00000-000">
+                    <input type="text" id="addr-cep" placeholder="00000-000" maxlength="9">
                 </div>
                 <div class="form-group">
                     <label>Número</label>
                     <input type="text" id="addr-num" placeholder="123">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Endereço / Rua</label>
+                <input type="text" id="addr-street" placeholder="Rua, Av, etc.">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Complemento</label>
+                    <input type="text" id="addr-comp" placeholder="Apto, Sala, Casa">
+                </div>
+                <div class="form-group">
+                    <label>Bairro</label>
+                    <input type="text" id="addr-neighborhood" placeholder="Seu bairro">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cidade</label>
+                    <input type="text" id="addr-city" placeholder="Sua cidade">
+                </div>
+                <div class="form-group">
+                    <label>Estado (UF)</label>
+                    <input type="text" id="addr-state" placeholder="RJ" maxlength="2">
                 </div>
             </div>
         </div>
@@ -285,8 +309,27 @@
         });
     }
 
+    // ViaCEP Integration
+    document.getElementById('addr-cep').addEventListener('blur', function() {
+        const cep = this.value.replace(/\D/g, '');
+        if (cep.length === 8) {
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById('addr-street').value = data.logradouro;
+                        document.getElementById('addr-neighborhood').value = data.bairro;
+                        document.getElementById('addr-city').value = data.localidade;
+                        document.getElementById('addr-state').value = data.uf;
+                        document.getElementById('addr-num').focus();
+                    }
+                })
+                .catch(err => console.error('ViaCEP Error:', err));
+        }
+    });
+
     function validateBaseFields() {
-        const fields = ['cust-name', 'cust-cpf', 'cust-email', 'cust-phone', 'addr-cep', 'addr-num'];
+        const fields = ['cust-name', 'cust-cpf', 'cust-email', 'cust-phone', 'addr-cep', 'addr-num', 'addr-street', 'addr-neighborhood', 'addr-city', 'addr-state'];
         for (let id of fields) {
             if (!document.getElementById(id).value) {
                 alert('Preencha todos os dados pessoais e de entrega.');
@@ -305,10 +348,11 @@
             customerAddress: {
                 cep: document.getElementById('addr-cep').value,
                 number: document.getElementById('addr-num').value,
-                street: 'Endereço via CEP', // Simplificado para o exemplo
-                neighborhood: 'Bairro',
-                city: 'Cidade',
-                state: 'RJ'
+                street: document.getElementById('addr-street').value,
+                neighborhood: document.getElementById('addr-neighborhood').value,
+                city: document.getElementById('addr-city').value,
+                state: document.getElementById('addr-state').value,
+                complement: document.getElementById('addr-comp').value
             },
             quantity: qty,
             lightColor: light,
