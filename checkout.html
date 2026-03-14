@@ -69,6 +69,49 @@
         .loading-overlay.active { display: flex; }
         .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Shipping Methods */
+        .shipping-section { margin-top: 24px; }
+        .shipping-options { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .shipping-option { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 16px; 
+            background: white; 
+            cursor: pointer; 
+            transition: background 0.2s;
+            border-bottom: 1px solid var(--border);
+        }
+        .shipping-option:last-child { border-bottom: none; }
+        .shipping-option:hover { background: #f9fafb; }
+        .shipping-option.selected { background: #f0f7ff; }
+        
+        .shipping-info { display: flex; align-items: center; gap: 12px; }
+        .radio-circle { 
+            width: 20px; 
+            height: 20px; 
+            border: 2px solid var(--border); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all 0.2s;
+        }
+        .shipping-option.selected .radio-circle { border-color: #ff8a00; }
+        .radio-inner { 
+            width: 10px; 
+            height: 10px; 
+            background: #ff8a00; 
+            border-radius: 50%; 
+            transform: scale(0); 
+            transition: transform 0.2s; 
+        }
+        .shipping-option.selected .radio-inner { transform: scale(1); }
+        
+        .shipping-text { font-size: 14px; font-weight: 500; color: #4b5563; }
+        .shipping-price { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+        .shipping-eta { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -139,6 +182,46 @@
                 <div class="form-group">
                     <label>Estado (UF)</label>
                     <input type="text" id="addr-state" placeholder="RJ" maxlength="2">
+                </div>
+            </div>
+        </div>
+
+        <div class="card shipping-section">
+            <div class="card-title"><i class="fas fa-truck"></i> Método de envio</div>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Escolha o seu método de entrega abaixo</p>
+            
+            <div class="shipping-options">
+                <div class="shipping-option selected" onclick="selectShipping('regular', 0, 'Envio Regular - Prazo de 4 a 8 dias')">
+                    <div class="shipping-info">
+                        <div class="radio-circle"><div class="radio-inner"></div></div>
+                        <div>
+                            <span class="shipping-text">Envio Regular</span>
+                            <span class="shipping-eta">Prazo de 4 a 8 dias</span>
+                        </div>
+                    </div>
+                    <span class="shipping-price">Grátis</span>
+                </div>
+                
+                <div class="shipping-option" onclick="selectShipping('express', 19.90, 'Envio Expresso - Prazo de 24 Horas')">
+                    <div class="shipping-info">
+                        <div class="radio-circle"><div class="radio-inner"></div></div>
+                        <div>
+                            <span class="shipping-text">Envio Expresso</span>
+                            <span class="shipping-eta">Prazo de 24 Horas</span>
+                        </div>
+                    </div>
+                    <span class="shipping-price">R$ 19,90</span>
+                </div>
+
+                <div class="shipping-option" onclick="selectShipping('pickup', 0, 'Retire no Galpão (Paracambi - RJ)')">
+                    <div class="shipping-info">
+                        <div class="radio-circle"><div class="radio-inner"></div></div>
+                        <div>
+                            <span class="shipping-text">Retire no Galpão</span>
+                            <span class="shipping-eta">Paracambi - RJ</span>
+                        </div>
+                    </div>
+                    <span class="shipping-price">Grátis</span>
                 </div>
             </div>
         </div>
@@ -217,12 +300,35 @@
     // URL Params
     const urlParams = new URLSearchParams(window.location.search);
     const qty = urlParams.get('qty') || '2';
-    const price = urlParams.get('price') || '89.90';
+    const price = parseFloat(urlParams.get('price') || '89.90');
     const light = urlParams.get('light') || 'warm';
 
-    document.getElementById('sum-total').textContent = `R$ ${parseFloat(price).toFixed(2).replace('.', ',')}`;
+    let selectedShippingPrice = 0;
+    let selectedShippingName = 'Envio Regular - Prazo de 4 a 8 dias';
+
+    function updateTotalDisplay() {
+        const total = price + selectedShippingPrice;
+        document.getElementById('sum-total').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+
+    updateTotalDisplay();
     document.getElementById('sum-img').src = light === 'warm' ? 'luminaria-warm.png' : 'luminaria-white.png';
     document.getElementById('sum-variant').textContent = `${qty} unid. - ${light === 'warm' ? 'Luz Quente' : 'Luz Branca'}`;
+
+    function selectShipping(type, cost, name) {
+        selectedShippingPrice = cost;
+        selectedShippingName = name;
+        
+        // Update UI
+        const options = document.querySelectorAll('.shipping-option');
+        options.forEach(opt => opt.classList.remove('selected'));
+        
+        // Find clicked option (simplification: index based or search)
+        const activeIdx = type === 'regular' ? 0 : (type === 'express' ? 1 : 2);
+        options[activeIdx].classList.add('selected');
+        
+        updateTotalDisplay();
+    }
 
     function setPaymentType(type) {
         paymentType = type;
@@ -356,7 +462,9 @@
             },
             quantity: qty,
             lightColor: light,
-            totalPrice: price
+            totalPrice: (price + selectedShippingPrice).toFixed(2),
+            shippingMethod: selectedShippingName,
+            shippingPrice: selectedShippingPrice
         };
     }
 

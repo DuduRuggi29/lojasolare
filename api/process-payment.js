@@ -16,18 +16,12 @@ export default async function handler(req, res) {
 
   try {
     const {
-      customerName,
-      customerEmail,
-      customerCpf,
-      customerPhone,
-      customerAddress,
-      quantity,
-      lightColor,
-      totalPrice,
       paymentMethodId,
       token,
       installments,
       issuerId,
+      shippingMethod,
+      shippingPrice,
     } = req.body;
 
     const isPix = paymentMethodId === 'pix';
@@ -96,6 +90,8 @@ export default async function handler(req, res) {
       payment_method: paymentMethodId,
       mp_payment_id: String(mpResult.id),
       status: mpResult.status === 'approved' ? 'approved' : 'pending',
+      shipping_method: shippingMethod,
+      shipping_price: shippingPrice,
     };
 
     if (isPix) {
