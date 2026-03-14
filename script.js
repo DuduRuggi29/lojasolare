@@ -41,6 +41,7 @@ function selectVariant(element, type) {
     // Update image if it's light color
     if (type === 'light') {
         const val = element.getAttribute('data-value');
+        currentSelectedLight = val;
         if (val === 'warm') {
             updateMainImage('luminaria-warm.png', document.querySelector('.thumb:nth-child(1)'));
         } else {
@@ -51,11 +52,32 @@ function selectVariant(element, type) {
 
 // Current globally selected price for dropdown use
 let currentSelectedPrice = 89.90;
+let currentSelectedQty = 2;
+let currentSelectedOldPrice = 159.90;
+let currentSelectedLight = 'warm';
+
+// Wire "Comprar Agora" button to checkout page
+document.addEventListener('DOMContentLoaded', () => {
+    const checkoutBtn = document.querySelector('.btn-checkout');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            const params = new URLSearchParams({
+                qty: currentSelectedQty,
+                price: currentSelectedPrice,
+                oldPrice: currentSelectedOldPrice,
+                light: currentSelectedLight,
+            });
+            window.location.href = `checkout.html?${params.toString()}`;
+        });
+    }
+});
 
 // Quantity and Price Logic
 window.updatePricing = function(qty, price, oldPrice, element) {
     console.log('Updating pricing:', qty, price, oldPrice);
     currentSelectedPrice = price;
+    currentSelectedQty = qty;
+    currentSelectedOldPrice = oldPrice;
 
     // Update UI active state for cards
     document.querySelectorAll('.qty-card').forEach(card => {

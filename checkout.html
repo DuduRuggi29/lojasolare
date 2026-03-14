@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra — Solare</title>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #1a3c34;
+            --accent: #4CAF50;
+            --bg: #f5f7f5;
+            --card: #ffffff;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --radius: 12px;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .checkout-header { background: var(--primary); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .checkout-header img { height: 36px; }
+        .secure-badge { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.85); font-size: 13px; }
+        .secure-badge i { color: var(--accent); }
+
+        .checkout-main { max-width: 1000px; margin: 32px auto; padding: 0 16px; display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
+        @media (max-width: 768px) { .checkout-main { grid-template-columns: 1fr; } .order-summary { order: -1; } }
+
+        .card { background: var(--card); border-radius: var(--radius); padding: 24px; border: 1px solid var(--border); margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: var(--accent); }
+
+        /* Payment Tabs */
+        .payment-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+        .tab-btn.active { border-color: var(--accent); color: var(--accent); background: #f1f8e9; }
+
+        /* Card Form */
+        #card-payment-form { display: none; }
+        #card-payment-form.active { display: block; }
+        
+        #form-checkout__cardNumber-container, 
+        #form-checkout__expirationDate-container, 
+        #form-checkout__securityCode-container {
+            height: 44px; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; background: white;
+        }
+
+        .btn-pay { width: 100%; background: var(--accent); color: white; border: none; padding: 18px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); margin-top: 10px; }
+        .btn-pay:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .order-summary { position: sticky; top: 24px; }
+        .product-line { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; }
+        .product-line img { width: 64px; border-radius: 8px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-top: 10px; }
+        
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; font-weight: 600;">Processando pagamento...</p>
+</div>
+
+<header class="checkout-header">
+    <img src="logo-solare.png" alt="Solare">
+    <div class="secure-badge"><i class="fas fa-lock"></i> <span>Checkout Seguro</span></div>
+</header>
+
+<main class="checkout-main">
+    <div class="checkout-form">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-user-circle"></i> Informações do Comprador</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cust-name" placeholder="Como no cartão">
+                </div>
+                <div class="form-group">
+                    <label>CPF</label>
+                    <input type="text" id="cust-cpf" placeholder="000.000.000-00">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="cust-email" placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp</label>
+                    <input type="tel" id="cust-phone" placeholder="(21) 99999-9999">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>CEP</label>
+                    <input type="text" id="addr-cep" placeholder="00000-000">
+                </div>
+                <div class="form-group">
+                    <label>Número</label>
+                    <input type="text" id="addr-num" placeholder="123">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fas fa-credit-card"></i> Forma de Pagamento</div>
+            
+            <div class="payment-tabs">
+                <button class="tab-btn active" id="tab-pix" onclick="setPaymentType('pix')">
+                    <img src="https://logopng.com.br/logos/pix-106.png" height="15"> Pix
+                </button>
+                <button class="tab-btn" id="tab-card" onclick="setPaymentType('card')">
+                    <i class="fas fa-credit-card"></i> Cartão
+                </button>
+            </div>
+
+            <!-- Pix Notice -->
+            <div id="pix-info">
+                <p style="font-size: 14px; color: var(--muted); margin-bottom: 15px;">
+                    O código Pix será gerado após finalizar. Você poderá copiar e colar no app do seu banco.
+                </p>
+                <button class="btn-pay" onclick="payWithPix()">PAGAR COM PIX</button>
+            </div>
+
+            <!-- Card Form -->
+            <div id="card-payment-form">
+                <div class="form-group">
+                    <label>Número do Cartão</label>
+                    <div id="form-checkout__cardNumber-container"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Vencimento</label>
+                        <div id="form-checkout__expirationDate-container"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>CVV</label>
+                        <div id="form-checkout__securityCode-container"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Parcelas</label>
+                    <select id="form-checkout__installments"></select>
+                </div>
+                <div class="form-group">
+                    <label>Banco Emissor</label>
+                    <select id="form-checkout__issuer"></select>
+                </div>
+                <button class="btn-pay" id="form-checkout__submit">PAGAR COM CARTÃO</button>
+            </div>
+        </div>
+    </div>
+
+    <aside class="order-summary">
+        <div class="card">
+            <div class="card-title">Resumo do Pedido</div>
+            <div class="product-line">
+                <img id="sum-img" src="luminaria-warm.png">
+                <div>
+                    <h4 id="sum-title">Luminária Solar Solare</h4>
+                    <p id="sum-variant" style="font-size: 12px; color: var(--muted);">2 unid. - Luz Quente</p>
+                </div>
+            </div>
+            <div class="total-row">
+                <span>Total:</span>
+                <span id="sum-total">R$ 89,90</span>
+            </div>
+        </div>
+    </aside>
+</main>
+
+<script>
+    const mp = new MercadoPago('APP_USR-99761fc8-3427-45b4-afa9-610b72f57f5b');
+    let paymentType = 'pix';
+    
+    // URL Params
+    const urlParams = new URLSearchParams(window.location.search);
+    const qty = urlParams.get('qty') || '2';
+    const price = urlParams.get('price') || '89.90';
+    const light = urlParams.get('light') || 'warm';
+
+    document.getElementById('sum-total').textContent = `R$ ${parseFloat(price).toFixed(2).replace('.', ',')}`;
+    document.getElementById('sum-img').src = light === 'warm' ? 'luminaria-warm.png' : 'luminaria-white.png';
+    document.getElementById('sum-variant').textContent = `${qty} unid. - ${light === 'warm' ? 'Luz Quente' : 'Luz Branca'}`;
+
+    function setPaymentType(type) {
+        paymentType = type;
+        document.getElementById('tab-pix').classList.toggle('active', type === 'pix');
+        document.getElementById('tab-card').classList.toggle('active', type === 'card');
+        document.getElementById('pix-info').style.display = type === 'pix' ? 'block' : 'none';
+        document.getElementById('card-payment-form').classList.toggle('active', type === 'card');
+        
+        if (type === 'card' && !window.cardFormInitialized) {
+            initCardForm();
+        }
+    }
+
+    async function payWithPix() {
+        if (!validateBaseFields()) return;
+        showLoading(true);
+        
+        const payload = getBasePayload();
+        payload.paymentMethodId = 'pix';
+
+        try {
+            const res = await fetch('/api/process-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                window.location.href = `obrigado.html?status=pending&type=pix&payment_id=${result.id}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64)}`;
+            } else {
+                alert('Erro ao processar Pix: ' + (result.error || 'Tente novamente'));
+            }
+        } catch (e) {
+            alert('Erro de conexão');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function initCardForm() {
+        window.cardFormInitialized = true;
+        const cardForm = mp.cardForm({
+            amount: price,
+            iframe: true,
+            form: {
+                id: "form-checkout",
+                cardNumber: { id: "form-checkout__cardNumber-container", placeholder: "Número do cartão" },
+                expirationDate: { id: "form-checkout__expirationDate-container", placeholder: "MM/AA" },
+                securityCode: { id: "form-checkout__securityCode-container", placeholder: "CVC" },
+                installments: { id: "form-checkout__installments" },
+                issuer: { id: "form-checkout__issuer" },
+            },
+            callbacks: {
+                onFormMounted: error => { if (error) console.warn("Form Mounted error: ", error); },
+                onSubmit: async event => {
+                    event.preventDefault();
+                    if (!validateBaseFields()) return;
+                    showLoading(true);
+
+                    const { token, issuerId, paymentMethodId, installments } = cardForm.getCardFormData();
+                    const payload = getBasePayload();
+                    Object.assign(payload, { token, issuerId, paymentMethodId, installments });
+
+                    try {
+                        const res = await fetch('/api/process-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                            window.location.href = `obrigado.html?status=${result.status}&type=card`;
+                        } else {
+                            alert('Erro no pagamento: ' + (result.error || 'Verifique os dados'));
+                        }
+                    } catch (e) {
+                        alert('Erro de conexão');
+                    } finally {
+                        showLoading(false);
+                    }
+                }
+            }
+        });
+    }
+
+    function validateBaseFields() {
+        const fields = ['cust-name', 'cust-cpf', 'cust-email', 'cust-phone', 'addr-cep', 'addr-num'];
+        for (let id of fields) {
+            if (!document.getElementById(id).value) {
+                alert('Preencha todos os dados pessoais e de entrega.');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function getBasePayload() {
+        return {
+            customerName: document.getElementById('cust-name').value,
+            customerEmail: document.getElementById('cust-email').value,
+            customerCpf: document.getElementById('cust-cpf').value,
+            customerPhone: document.getElementById('cust-phone').value,
+            customerAddress: {
+                cep: document.getElementById('addr-cep').value,
+                number: document.getElementById('addr-num').value,
+                street: 'Endereço via CEP', // Simplificado para o exemplo
+                neighborhood: 'Bairro',
+                city: 'Cidade',
+                state: 'RJ'
+            },
+            quantity: qty,
+            lightColor: light,
+            totalPrice: price
+        };
+    }
+
+    function showLoading(show) {
+        document.getElementById('loading-overlay').classList.toggle('active', show);
+    }
+</script>
+
+</body>
+</html>
