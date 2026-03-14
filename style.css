@@ -1160,7 +1160,7 @@ footer {
     /* Global Mobile Shield - EXEMPTING MARQUEE */
     *:not(.marquee):not(.marquee p):not(.marquee-content):not(.marquee-card) { 
         box-sizing: border-box !important; 
-        max-width: 100vw !important;
+        max-width: 100% !important;
     }
 
     html, body {
@@ -1214,14 +1214,42 @@ footer {
         padding: 0 !important;
         border-radius: 0 !important;
         width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .main-gallery-img {
+        width: 100% !important;
+        overflow: hidden !important;
     }
 
     .main-gallery-img img {
         border-radius: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
         height: auto !important;
         max-height: none !important;
         object-fit: contain !important;
+        display: block !important;
+    }
+
+    /* Thumbnails: scroll horizontal sem vazar */
+    .thumbnails {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .thumb {
+        width: 70px !important;
+        height: 70px !important;
+        max-width: 70px !important;
+        flex-shrink: 0 !important;
+        object-fit: cover !important;
+        border-radius: 8px !important;
     }
 
     .buy-options {
@@ -2173,5 +2201,47 @@ footer {
     }
     .modal-content {
         padding: 20px;
+    }
+
+    /* Reviews grid: 1 coluna no mobile */
+    .reviews-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    /* Review card image: contida corretamente */
+    .rc-image {
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .rc-image img {
+        width: 100% !important;
+        max-width: 100% !important;
+        object-fit: cover !important;
+    }
+
+    /* Mini gallery de fotos de clientes: scroll controlado */
+    .mini-gallery {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 8px !important;
+        padding-bottom: 5px !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .mini-gallery img,
+    .more-photos {
+        flex-shrink: 0 !important;
+        width: 55px !important;
+        height: 55px !important;
+        max-width: 55px !important;
+    }
+
+    /* Garante que imagens de seção de descrição nunca vazem */
+    .desc-image img {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
     }
 }
