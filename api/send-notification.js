@@ -217,3 +217,99 @@ export async function notifyPixExpired({ customerName, customerEmail }) {
   const html = pixExpiredEmailHTML({ customerName });
   await sendEmail({ to: customerEmail, subject, html });
 }
+
+// ─────────────────────────────────────────────
+// Pix Reminder — scheduled 2 minutes after generation
+// ─────────────────────────────────────────────
+
+function pixReminderEmailHTML({ customerName, pixCode }) {
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f7f5;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7f5;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+        <tr><td style="background:#1a3c34;padding:28px 32px;text-align:center;">
+          <h1 style="color:#ffffff;margin:0;font-size:20px;font-weight:700;">🌞 Solare</h1>
+          <p style="color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;">lojassolare.com.br</p>
+        </td></tr>
+
+        <tr><td style="padding:32px 40px;text-align:center;">
+          <div style="font-size:44px;margin-bottom:12px;">⏳</div>
+          <h2 style="color:#1a1a1a;margin:0 0 10px;font-size:22px;">
+            Seu Pix está esperando, ${customerName.split(' ')[0]}!
+          </h2>
+          <p style="color:#6b7280;font-size:15px;margin:0 0 24px;line-height:1.7;">
+            Identificamos que você gerou um Pix mas ainda não concluiu o pagamento.<br>
+            O código expira em <strong>30 minutos</strong> — não perca seu pedido!
+          </p>
+          ${pixCode ? `
+          <div style="background:#f8fafc;border:1px dashed #d1d5db;border-radius:10px;padding:16px;margin-bottom:24px;word-break:break-all;font-size:12px;color:#374151;font-family:monospace;text-align:left;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Código Pix Copia e Cola</p>
+            ${pixCode}
+          </div>
+          ` : ''}
+          <a href="https://lojassolare.com.br"
+             style="display:inline-block;background:#4CAF50;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">
+            Pagar Agora
+          </a>
+        </td></tr>
+
+        <tr><td style="padding:0 40px 32px;text-align:center;">
+          <p style="color:#9ca3af;font-size:12px;margin:0;line-height:1.6;">
+            Se você já realizou o pagamento, por favor ignore este e-mail.<br>
+            © 2025 Solare · lojassolare.com.br
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+/**
+ * Schedule a Pix reminder email 2 minutes after generation.
+ * Uses Resend's scheduled_at parameter (ISO 8601).
+ * If user already paid, they simply ignore the email.
+ */
+export async function schedulePixReminder({ customerName, customerEmail, pixCode }) {
+  if (!RESEND_API_KEY) {
+    console.warn('[Notifications] RESEND_API_KEY not set, skipping Pix reminder schedule.');
+    return;
+  }
+
+  const twoMinutesLater = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+  const subject = `⏳ Você esqueceu de pagar seu Pix — Solare`;
+  const html = pixReminderEmailHTML({ customerName, pixCode });
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: customerEmail,
+        subject,
+        html,
+        scheduled_at: twoMinutesLater,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('[Resend] Pix reminder schedule error:', JSON.stringify(data));
+    } else {
+      console.log('[Resend] Pix reminder scheduled for', twoMinutesLater, '— id:', data.id);
+    }
+  } catch (e) {
+    console.error('[Resend] Pix reminder schedule exception:', e.message);
+  }
+}

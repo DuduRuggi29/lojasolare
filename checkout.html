@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Finalizar Compra — Solare</title>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -235,7 +235,7 @@
             padding: 12px 14px;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 15px;
+            font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
             font-family: 'Inter', sans-serif;
             outline: none;
             -webkit-appearance: none;
@@ -502,10 +502,46 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { margin-top: 14px; font-weight: 600; color: var(--primary); font-size: 14px; }
 
+        /* ── PAYMENT MINI SUMMARY (Step 3) ── */
+        .payment-mini-summary {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+        }
+        .mini-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+        .mini-row:last-child { margin-bottom: 0; }
+        .mini-row.mini-total {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 15px;
+            padding-top: 8px;
+            margin-top: 3px;
+            border-top: 1px solid var(--border);
+            margin-bottom: 0;
+        }
+        .mini-row.mini-pix {
+            color: #c2410c;
+            font-weight: 600;
+            font-size: 12px;
+            margin-top: 6px;
+            background: #fff8f0;
+            border-radius: 6px;
+            padding: 5px 8px;
+        }
+
         /* ── FOOTER ── */
         .checkout-footer {
-            background: #fff;
-            border-top: 1px solid var(--border);
+            background: var(--primary);
+            border-top: none;
             padding: 28px 20px;
             text-align: center;
             margin-top: 28px;
@@ -518,11 +554,12 @@
             flex-wrap: wrap;
             margin-bottom: 18px;
         }
-        .payment-badges-central img { height: 22px; opacity: 0.7; }
-        .footer-contact { margin-bottom: 14px; font-size: 13px; color: var(--text); }
-        .footer-contact a { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .footer-policies-notice { font-size: 11px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
-        .footer-legal { font-size: 11px; color: var(--muted); font-weight: 500; }
+        .payment-badges-central img { height: 22px; opacity: 0.85; filter: brightness(0) invert(1); }
+        .footer-contact { margin-bottom: 14px; font-size: 13px; color: rgba(255,255,255,0.9); }
+        .footer-contact a { color: #a8d5a2; text-decoration: none; font-weight: 600; }
+        .footer-contact a:hover { color: #fff; }
+        .footer-policies-notice { font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 14px; line-height: 1.5; }
+        .footer-legal { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; }
     </style>
 </head>
 <body>
@@ -714,6 +751,17 @@
                     </button>
                 </div>
 
+                <!-- Payment mini summary — updates dynamically -->
+                <div class="payment-mini-summary">
+                    <div class="mini-row"><span>Subtotal</span><span id="pay-sub">R$ 8,00</span></div>
+                    <div class="mini-row"><span>Frete</span><span id="pay-ship">Grátis</span></div>
+                    <div class="mini-row mini-total"><span>Total</span><span id="pay-total">R$ 8,00</span></div>
+                    <div class="mini-row mini-pix" id="pay-pix-row">
+                        <span><i class="fas fa-bolt" style="color:#f97316;margin-right:4px;"></i>Com Pix (5% off)</span>
+                        <span id="pay-pix">R$ 7,60</span>
+                    </div>
+                </div>
+
                 <div id="pix-info">
                     <div class="pix-info-box">
                         <i class="fas fa-tag"></i>
@@ -852,10 +900,23 @@
     function updateTotalDisplay() {
         const sub = price * parseInt(qty);
         const total = sub + selectedShippingPrice;
+        const shipTxt = selectedShippingPrice === 0 ? 'Grátis' : fmt(selectedShippingPrice);
+
+        // Sidebar summary
         document.getElementById('sum-subtotal').textContent = fmt(sub);
-        document.getElementById('sum-shipping').textContent = selectedShippingPrice === 0 ? 'Grátis' : fmt(selectedShippingPrice);
+        document.getElementById('sum-shipping').textContent = shipTxt;
         document.getElementById('sum-total').textContent = fmt(total);
         document.getElementById('sum-pix-total').textContent = fmt(total * 0.95);
+
+        // Step-3 mini summary
+        const paySub = document.getElementById('pay-sub');
+        const payShip = document.getElementById('pay-ship');
+        const payTotal = document.getElementById('pay-total');
+        const payPix = document.getElementById('pay-pix');
+        if (paySub) paySub.textContent = fmt(sub);
+        if (payShip) payShip.textContent = shipTxt;
+        if (payTotal) payTotal.textContent = fmt(total);
+        if (payPix) payPix.textContent = fmt(total * 0.95);
     }
 
     updateTotalDisplay();
@@ -1113,6 +1174,8 @@
         document.getElementById('tab-card').classList.toggle('active', type === 'card');
         document.getElementById('pix-info').style.display = type === 'pix' ? 'block' : 'none';
         document.getElementById('card-payment-form').style.display = type === 'card' ? 'block' : 'none';
+        const pixRow = document.getElementById('pay-pix-row');
+        if (pixRow) pixRow.style.display = type === 'pix' ? 'flex' : 'none';
         if (type === 'card') {
             syncFields();
             if (!cardFormBound) {

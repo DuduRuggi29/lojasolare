@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved } from './send-notification.js';
+import { notifyPaymentApproved, schedulePixReminder } from './send-notification.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -116,6 +116,15 @@ export default async function handler(req, res) {
 
     if (dbError) {
       console.error('Supabase Error:', dbError);
+    }
+
+    // Schedule Pix reminder email 2 minutes after generation (if not paid, user gets a nudge)
+    if (isPix) {
+      schedulePixReminder({
+        customerName,
+        customerEmail,
+        pixCode: mpResult.point_of_interaction.transaction_data.qr_code,
+      }).catch(e => console.error('Pix reminder schedule failed (non-fatal):', e));
     }
 
     // For card payments approved immediately, notify and save card for 1-click upsell
