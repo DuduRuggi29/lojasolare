@@ -7,7 +7,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_FROM = process.env.TWILIO_PHONE_FROM;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'pedidos@lojassolare.com.br';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'pedidos@lojasolare.com.br';
 
 // ─────────────────────────────────────────────
 // Email Templates
@@ -26,7 +26,7 @@ function approvedEmailHTML({ customerName, totalPrice, shippingMethod, orderId }
         <!-- Header -->
         <tr><td style="background:#1a3c34;padding:32px;text-align:center;">
           <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-0.5px;">🌞 Solare</h1>
-          <p style="color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;">lojassolare.com.br</p>
+          <p style="color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;">lojasolare.com.br</p>
         </td></tr>
 
         <!-- Confirmed Badge -->
@@ -76,7 +76,7 @@ function approvedEmailHTML({ customerName, totalPrice, shippingMethod, orderId }
             Você receberá uma atualização assim que seu pedido for enviado. 
             Em caso de dúvidas, entre em contato conosco.
           </p>
-          <p style="color:#9ca3af;font-size:12px;margin:0;">© 2025 Solare · lojassolare.com.br</p>
+          <p style="color:#9ca3af;font-size:12px;margin:0;">© 2025 Solare · lojasolare.com.br</p>
         </td></tr>
 
       </table>
@@ -98,7 +98,7 @@ function pixExpiredEmailHTML({ customerName }) {
         
         <tr><td style="background:#1a3c34;padding:32px;text-align:center;">
           <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">🌞 Solare</h1>
-          <p style="color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;">lojassolare.com.br</p>
+          <p style="color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;">lojasolare.com.br</p>
         </td></tr>
 
         <tr><td style="padding:32px 40px;text-align:center;">
@@ -108,14 +108,14 @@ function pixExpiredEmailHTML({ customerName }) {
             O código Pix gerado expirou sem pagamento confirmado. 
             Mas fique tranquilo — seus produtos continuam disponíveis!
           </p>
-          <a href="https://lojassolare.com.br" 
+          <a href="https://lojasolare.com.br" 
              style="display:inline-block;background:#4CAF50;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">
             Finalizar Compra Novamente
           </a>
         </td></tr>
 
         <tr><td style="padding:0 40px 40px;text-align:center;">
-          <p style="color:#9ca3af;font-size:12px;margin:0;">© 2025 Solare · lojassolare.com.br</p>
+          <p style="color:#9ca3af;font-size:12px;margin:0;">© 2025 Solare · lojasolare.com.br</p>
         </td></tr>
 
       </table>
