@@ -355,7 +355,6 @@
 
         /* ── MP CARD INPUTS ── */
         #card-payment-form { display: none; }
-        #card-payment-form.active { display: block; }
         #form-checkout__cardNumber-container,
         #form-checkout__expirationDate-container,
         #form-checkout__securityCode-container {
@@ -1113,15 +1112,19 @@
         document.getElementById('tab-pix').classList.toggle('active', type === 'pix');
         document.getElementById('tab-card').classList.toggle('active', type === 'card');
         document.getElementById('pix-info').style.display = type === 'pix' ? 'block' : 'none';
-        document.getElementById('card-payment-form').classList.toggle('active', type === 'card');
+        document.getElementById('card-payment-form').style.display = type === 'card' ? 'block' : 'none';
         if (type === 'card') {
             syncFields();
-            if (!cardFormBound) initCardForm();
+            if (!cardFormBound) {
+                // Wait 2 animation frames so the browser paints the visible containers
+                // before the MP SDK tries to measure them and inject iframes
+                requestAnimationFrame(() => requestAnimationFrame(() => initCardForm()));
+            }
         }
     }
 
     function syncFields() {
-        document.getElementById('form-checkout__cardholderName').value = document.getElementById('cust-name').value;
+        // NOT syncing cardholderName — user fills it manually (may use another person's card)
         document.getElementById('form-checkout__identificationNumber').value = document.getElementById('cust-cpf').value.replace(/\D/g, '');
         document.getElementById('form-checkout__cardholderEmail').value = document.getElementById('cust-email').value;
     }

@@ -56,7 +56,7 @@ export default async function handler(req, res) {
           federal_unit: customerAddress.state,
         },
       },
-      notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
+      ...(process.env.SITE_URL && { notification_url: `${process.env.SITE_URL}/api/mp-webhook` }),
       external_reference: `order-${Date.now()}`,
     };
 
