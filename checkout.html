@@ -12,7 +12,7 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --primary: #1a3c34;
+            --primary: #2c4c3b; /* Harmonized with logo background */
             --accent: #4CAF50;
             --bg: #f5f7f5;
             --card: #ffffff;
@@ -23,13 +23,13 @@
             --radius: 12px;
         }
 
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; width: 100%; }
-        .checkout-header { background: var(--primary); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-        .checkout-header img { height: 32px; }
-        .secure-badge { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.85); font-size: 12px; }
-        .secure-badge i { color: var(--accent); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; width: 100%; display: flex; flex-direction: column; }
+        .checkout-header { background: var(--primary); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .checkout-header img { height: 40px; }
+        .secure-badge { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 13px; font-weight: 500; }
+        .secure-badge i { color: #4CAF50; }
 
-        .checkout-main { max-width: 1000px; margin: 20px auto; padding: 0 12px; display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+        .checkout-main { max-width: 1000px; margin: 20px auto; padding: 0 12px; display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; flex: 1; }
         @media (max-width: 768px) { 
             .checkout-main { grid-template-columns: 1fr; margin-top: 10px; } 
             .order-summary { order: -1; position: static; } 
@@ -115,6 +115,16 @@
         .status-loading { color: var(--muted); }
         .status-error { color: var(--danger); cursor: pointer; text-decoration: underline; }
         .status-success { color: var(--accent); }
+
+        /* Footer Styling */
+        .checkout-footer { background: #fff; border-top: 1px solid var(--border); padding: 40px 20px; text-align: center; margin-top: 40px; }
+        .footer-content { max-width: 800px; margin: 0 auto; }
+        .payment-badges-central { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+        .payment-badges-central img { height: 24px; opacity: 0.85; }
+        .footer-contact { margin-bottom: 24px; font-size: 14px; color: var(--text); }
+        .footer-contact a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .footer-policies-notice { font-size: 11px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+        .footer-legal { font-size: 12px; color: var(--muted); font-weight: 500; }
     </style>
 </head>
 <body>
@@ -554,6 +564,35 @@
         }
     });
 </script>
+
+<footer class="checkout-footer">
+    <div class="footer-content">
+        <div class="payment-badges-central">
+            <img src="https://img.icons8.com/color/48/000000/visa.png" alt="Visa">
+            <img src="https://img.icons8.com/color/48/000000/mastercard.png" alt="Mastercard">
+            <img src="https://img.icons8.com/color/48/000000/amex.png" alt="Amex">
+            <img src="https://img.icons8.com/color/48/000000/barcode.png" alt="Boleto">
+            <img src="https://img.icons8.com/color/48/000000/pix.png" alt="Pix">
+            <img src="https://img.icons8.com/color/48/000000/mercado-pago.png" alt="Mercado Pago">
+        </div>
+
+        <div class="footer-contact">
+            <p><strong>Dúvidas? Fale conosco:</strong></p>
+            <p style="margin-top: 5px;">
+                E-mail: <a href="mailto:contato@lojasolare.com.br">contato@lojasolare.com.br</a> | 
+                WhatsApp: <a href="https://wa.me/5521975605337" target="_blank">+55 21 97560-5337</a>
+            </p>
+        </div>
+
+        <div class="footer-policies-notice">
+            Ao realizar sua compra, você concorda com nossas políticas de privacidade, trocas e devoluções apresentadas em nossa página inicial.
+        </div>
+
+        <div class="footer-legal">
+            Holding Loja Solare LTDA | CNPJ: 53.191.146/0001-28
+        </div>
+    </div>
+</footer>
 
 </body>
 </html>
