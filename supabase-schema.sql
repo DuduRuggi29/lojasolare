@@ -41,3 +41,7 @@ CREATE POLICY "Service role full access"
   ON orders
   USING (true)
   WITH CHECK (true);
+
+-- Adicionando suporte para Upsell de 1 Clique
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS mp_customer_id TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS mp_card_id TEXT;

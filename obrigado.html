@@ -57,6 +57,13 @@
     const type = params.get('type');
     const pixCode = params.get('qr_code');
     const pixImg = params.get('qr_code_base64');
+    const paymentId = params.get('id');
+    const isUpsell = params.get('upsell') === 'true';
+
+    if (isUpsell) {
+        document.getElementById('status-title').innerText = 'Oferta Adicionada com Sucesso!';
+        document.getElementById('status-desc').innerText = 'Parabéns pela escolha! Seu pedido completo foi atualizado e será enviado em breve.';
+    }
 
     if (type === 'pix' && status === 'pending') {
         document.getElementById('status-icon').className = 'icon pending';
@@ -66,11 +73,40 @@
         document.getElementById('pix-area').style.display = 'block';
         document.getElementById('qr-img').src = `data:image/png;base64,${pixImg}`;
         document.getElementById('pix-code').innerText = pixCode;
+
+        // Iniciar polling para Pix
+        if (paymentId) {
+            startPixPolling(paymentId);
+        }
     } else if (status === 'rejected') {
         document.getElementById('status-icon').className = 'icon failure';
         document.getElementById('status-icon').innerHTML = '<i class="fas fa-times-circle"></i>';
         document.getElementById('status-title').innerText = 'Pagamento Recusado';
         document.getElementById('status-desc').innerText = 'Não foi possível processar seu cartão. Tente novamente.';
+    }
+
+    async function startPixPolling(id) {
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/check-payment-status?payment_id=${id}`);
+                const data = await res.json();
+
+                if (data.status === 'approved') {
+                    clearInterval(interval);
+                    showSuccess();
+                }
+            } catch (e) {
+                console.error('Erro polling:', e);
+            }
+        }, 5000); // Check every 5 seconds
+    }
+
+    function showSuccess() {
+        document.getElementById('pix-area').style.display = 'none';
+        document.getElementById('status-icon').className = 'icon success';
+        document.getElementById('status-icon').innerHTML = '<i class="fas fa-check-circle"></i>';
+        document.getElementById('status-title').innerText = 'Pagamento Confirmado!';
+        document.getElementById('status-desc').innerText = 'Recebemos o seu Pix. Sua Solare já está sendo preparada!';
     }
 
     function copyPix() {

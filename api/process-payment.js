@@ -118,8 +118,7 @@ export default async function handler(req, res) {
       console.error('Supabase Error:', dbError);
     }
 
-    // For card payments approved immediately, notify now
-    // Pix and webhook-confirmed payments are handled by mp-webhook.js
+    // For card payments approved immediately, notify and save card for 1-click upsell
     if (!isPix && mpResult.status === 'approved') {
       const savedOrder = order || { id: `MP-${mpResult.id}` };
       await notifyPaymentApproved({
@@ -130,6 +129,39 @@ export default async function handler(req, res) {
         shippingMethod,
         orderId: savedOrder.id,
       });
+
+      // Save card to MP customer for one-click upsell
+      try {
+        // 1. Create or get customer
+        const custResponse = await fetch('https://api.mercadopago.com/v1/customers/search?email=' + encodeURIComponent(customerEmail), {
+          headers: { 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` }
+        });
+        const custData = await custResponse.json();
+        let mpCustomerId = custData.results?.[0]?.id;
+
+        if (!mpCustomerId) {
+          const newCust = await fetch('https://api.mercadopago.com/v1/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}` },
+            body: JSON.stringify({ email: customerEmail, first_name: customerName.split(' ')[0], last_name: customerName.split(' ').slice(1).join(' ') }),
+          });
+          const newCustData = await newCust.json();
+          mpCustomerId = newCustData.id;
+        }
+
+        // 2. Save card (using the original payment token is not possible after payment)
+        //    MP provides card info via payment response — save from there
+        const mpCardId = mpResult.card?.id || null;
+
+        if (mpCustomerId && order) {
+          await supabase.from('orders').update({
+            mp_customer_id: String(mpCustomerId),
+            mp_card_id: mpCardId ? String(mpCardId) : null,
+          }).eq('id', order.id);
+        }
+      } catch (cardSaveErr) {
+        console.error('Card save error (non-fatal):', cardSaveErr);
+      }
     }
 
     return res.status(200).json({
@@ -137,6 +169,7 @@ export default async function handler(req, res) {
       status: mpResult.status,
       status_detail: mpResult.status_detail,
       id: mpResult.id,
+      orderId: order?.id || null,
       qr_code: isPix ? mpResult.point_of_interaction.transaction_data.qr_code : null,
       qr_code_base64: isPix ? mpResult.point_of_interaction.transaction_data.qr_code_base64 : null,
     });
