@@ -54,11 +54,19 @@
         #form-checkout__cardNumber-container, 
         #form-checkout__expirationDate-container, 
         #form-checkout__securityCode-container {
-            height: 44px; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; background: white;
+            height: 46px; border: 1.5px solid var(--border); border-radius: 8px; background: white;
+            position: relative;
+        }
+        .mp-input-container iframe {
+            width: 100%; height: 100%;
         }
 
         .btn-pay { width: 100%; background: var(--accent); color: white; border: none; padding: 18px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); margin-top: 10px; }
         .btn-pay:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .mp-select {
+            width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: white;
+        }
 
         .order-summary { position: sticky; top: 24px; }
         .product-line { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; }
@@ -273,6 +281,23 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label>Titular do Cartão</label>
+                        <input type="text" id="form-checkout__cardholderName" placeholder="Como no cartão">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo Doc.</label>
+                            <select id="form-checkout__identificationType" class="mp-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Número do Doc.</label>
+                            <input type="text" id="form-checkout__identificationNumber" placeholder="CPF/CNPJ">
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: none;">
+                        <input type="email" id="form-checkout__cardholderEmail">
+                    </div>
+                    <div class="form-group">
                         <label>Parcelas</label>
                         <select id="form-checkout__installments" class="mp-select"></select>
                     </div>
@@ -349,8 +374,10 @@
         document.getElementById('card-payment-form').classList.toggle('active', type === 'card');
         
         if (type === 'card' && !window.cardFormInitialized) {
-            console.log('Iniciando Card Form...');
-            initCardForm();
+            console.log('Iniciando Card Form em 100ms...');
+            setTimeout(() => {
+                initCardForm();
+            }, 100);
         }
     }
 
@@ -393,6 +420,10 @@
                 securityCode: { id: "form-checkout__securityCode-container", placeholder: "CVC" },
                 installments: { id: "form-checkout__installments" },
                 issuer: { id: "form-checkout__issuer" },
+                cardholderName: { id: "form-checkout__cardholderName" },
+                cardholderEmail: { id: "form-checkout__cardholderEmail" },
+                identificationType: { id: "form-checkout__identificationType" },
+                identificationNumber: { id: "form-checkout__identificationNumber" },
             },
             callbacks: {
                 onFormMounted: error => { 
@@ -465,10 +496,12 @@
         const fields = ['cust-name', 'cust-cpf', 'cust-email', 'cust-phone', 'addr-cep', 'addr-num', 'addr-street', 'addr-neighborhood', 'addr-city', 'addr-state'];
         for (let id of fields) {
             if (!document.getElementById(id).value) {
-                alert('Preencha todos os dados pessoais e de entrega.');
+                alert('Preencha os dados de contato e entrega acima.');
                 return false;
             }
         }
+        // Auto-fill hidden MP email
+        document.getElementById('form-checkout__cardholderEmail').value = document.getElementById('cust-email').value;
         return true;
     }
 
