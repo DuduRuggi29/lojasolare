@@ -122,6 +122,16 @@
         .shipping-eta { font-size: 13px; color: var(--muted); display: block; margin-top: 1px; }
 
         .card-title { border-bottom: none; margin-bottom: 20px; }
+        
+        /* Validation & Sync */
+        .input-error { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1); }
+        .sync-active { background: #fdf2f2; border-color: #fecaca; }
+        
+        .mp-label-float { font-size: 11px; color: var(--accent); margin-bottom: 2px; display: block; }
+        #card-form-status { font-size: 12px; margin-top: 8px; font-weight: 500; }
+        .status-loading { color: var(--muted); }
+        .status-error { color: var(--danger); cursor: pointer; text-decoration: underline; }
+        .status-success { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -281,8 +291,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Titular do Cartão</label>
-                        <input type="text" id="form-checkout__cardholderName" placeholder="Como no cartão">
+                        <label>Titular do Cartão <span style="font-size: 10px; color: var(--accent);">(Preenchido Automaticamente)</span></label>
+                        <input type="text" id="form-checkout__cardholderName" placeholder="Nome Completo" readonly style="background: #f9fafb; cursor: not-allowed;">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -290,8 +300,8 @@
                             <select id="form-checkout__identificationType" class="mp-select"></select>
                         </div>
                         <div class="form-group">
-                            <label>Número do Doc.</label>
-                            <input type="text" id="form-checkout__identificationNumber" placeholder="CPF/CNPJ">
+                            <label>Número do Doc. <span style="font-size: 10px; color: var(--accent);">(Automático)</span></label>
+                            <input type="text" id="form-checkout__identificationNumber" placeholder="CPF/CNPJ" readonly style="background: #f9fafb; cursor: not-allowed;">
                         </div>
                     </div>
                     <div class="form-group" style="display: none;">
@@ -305,6 +315,7 @@
                         <label>Banco Emissor</label>
                         <select id="form-checkout__issuer" class="mp-select"></select>
                     </div>
+                    <div id="card-form-status" class="status-loading">Carregando campos de segurança...</div>
                     <button class="btn-pay" id="form-checkout__submit" type="submit">PAGAR COM CARTÃO</button>
                 </form>
             </div>
@@ -427,8 +438,14 @@
             },
             callbacks: {
                 onFormMounted: error => { 
-                    if (error) console.error("Card Form Mounted error: ", error);
-                    else console.log("Card Form montado com sucesso!");
+                    const status = document.getElementById('card-form-status');
+                    if (error) {
+                        console.error("Card Form Mounted error: ", error);
+                        status.innerHTML = '<span class="status-error" onclick="window.location.reload()">Erro ao carregar campos. Clique aqui para recarregar.</span>';
+                    } else {
+                        console.log("Card Form montado com sucesso!");
+                        status.innerHTML = '<span class="status-success">✅ Campos de segurança prontos</span>';
+                    }
                 },
                 onSubmit: async event => {
                     console.log('Submit do cartão acionado');
@@ -493,17 +510,55 @@
     });
 
     function validateBaseFields() {
-        const fields = ['cust-name', 'cust-cpf', 'cust-email', 'cust-phone', 'addr-cep', 'addr-num', 'addr-street', 'addr-neighborhood', 'addr-city', 'addr-state'];
-        for (let id of fields) {
-            if (!document.getElementById(id).value) {
-                alert('Preencha os dados de contato e entrega acima.');
-                return false;
+        const fields = [
+            { id: 'cust-name', label: 'Nome' },
+            { id: 'cust-cpf', label: 'CPF' },
+            { id: 'cust-email', label: 'E-mail' },
+            { id: 'cust-phone', label: 'Telefone' },
+            { id: 'addr-cep', label: 'CEP' },
+            { id: 'addr-num', label: 'Número' },
+            { id: 'addr-street', label: 'Endereço' },
+            { id: 'addr-neighborhood', label: 'Bairro' },
+            { id: 'addr-city', label: 'Cidade' },
+            { id: 'addr-state', label: 'Estado' }
+        ];
+        
+        let firstMissing = null;
+        for (let field of fields) {
+            const el = document.getElementById(field.id);
+            if (!el.value) {
+                el.classList.add('input-error');
+                if (!firstMissing) firstMissing = field.label;
+                el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
             }
         }
-        // Auto-fill hidden MP email
-        document.getElementById('form-checkout__cardholderEmail').value = document.getElementById('cust-email').value;
+
+        if (firstMissing) {
+            alert(`Por favor, preencha o campo: ${firstMissing}`);
+            // Switch to standard tab if delivery info is missing
+            return false;
+        }
+
+        // Final Sync
+        syncFields();
         return true;
     }
+
+    // Field Synchronization
+    function syncFields() {
+        const name = document.getElementById('cust-name').value;
+        const cpf = document.getElementById('cust-cpf').value;
+        const email = document.getElementById('cust-email').value;
+
+        document.getElementById('form-checkout__cardholderName').value = name;
+        document.getElementById('form-checkout__identificationNumber').value = cpf;
+        document.getElementById('form-checkout__cardholderEmail').value = email;
+    }
+
+    // Add immediate listeners
+    document.getElementById('cust-name').addEventListener('input', syncFields);
+    document.getElementById('cust-cpf').addEventListener('input', syncFields);
+    document.getElementById('cust-email').addEventListener('input', syncFields);
 
     function getBasePayload() {
         return {
