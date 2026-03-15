@@ -135,6 +135,7 @@ export async function sendEmail({ to, subject, html }) {
     return;
   }
   try {
+    console.log(`[Resend] Attempting to send email from ${FROM_EMAIL} to ${to}...`);
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -143,14 +144,16 @@ export async function sendEmail({ to, subject, html }) {
       },
       body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
     });
+    
+    const data = await res.json();
+    
     if (!res.ok) {
-      const err = await res.json();
-      console.error('[Resend Error]', err);
+      console.error('[Resend Error Response]', JSON.stringify(data, null, 2));
     } else {
-      console.log('[Resend] Email sent to', to);
+      console.log('[Resend Success]', data.id);
     }
   } catch (e) {
-    console.error('[Resend Exception]', e);
+    console.error('[Resend Exception]', e.message);
   }
 }
 

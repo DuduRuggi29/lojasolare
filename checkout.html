@@ -349,6 +349,7 @@
         document.getElementById('card-payment-form').classList.toggle('active', type === 'card');
         
         if (type === 'card' && !window.cardFormInitialized) {
+            console.log('Iniciando Card Form...');
             initCardForm();
         }
     }
@@ -394,13 +395,18 @@
                 issuer: { id: "form-checkout__issuer" },
             },
             callbacks: {
-                onFormMounted: error => { if (error) console.warn("Form Mounted error: ", error); },
+                onFormMounted: error => { 
+                    if (error) console.error("Card Form Mounted error: ", error);
+                    else console.log("Card Form montado com sucesso!");
+                },
                 onSubmit: async event => {
+                    console.log('Submit do cartão acionado');
                     event.preventDefault();
                     if (!validateBaseFields()) return;
                     showLoading(true);
 
                     const { token, issuerId, paymentMethodId, installments } = cardForm.getCardFormData();
+                    console.log('Token gerado:', token ? 'Sim' : 'Não');
                     const payload = getBasePayload();
                     Object.assign(payload, { token, issuerId, paymentMethodId, installments });
 
