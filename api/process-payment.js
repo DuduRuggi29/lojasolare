@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { notifyPaymentApproved } from './send-notification.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -115,6 +116,20 @@ export default async function handler(req, res) {
 
     if (dbError) {
       console.error('Supabase Error:', dbError);
+    }
+
+    // For card payments approved immediately, notify now
+    // Pix and webhook-confirmed payments are handled by mp-webhook.js
+    if (!isPix && mpResult.status === 'approved') {
+      const savedOrder = order || { id: `MP-${mpResult.id}` };
+      await notifyPaymentApproved({
+        customerName,
+        customerEmail,
+        customerPhone,
+        totalPrice,
+        shippingMethod,
+        orderId: savedOrder.id,
+      });
     }
 
     return res.status(200).json({

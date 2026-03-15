@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { notifyPaymentApproved, notifyPixExpired } from './send-notification.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -49,6 +50,13 @@ export default async function handler(req, res) {
 
     const newStatus = statusMap[payment.status] || 'pending';
 
+    // Fetch the order from Supabase to get customer info for notifications
+    const { data: order } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('mp_payment_id', String(paymentId))
+      .single();
+
     const { error: updateError } = await supabase
       .from('orders')
       .update({ status: newStatus })
@@ -57,6 +65,25 @@ export default async function handler(req, res) {
     if (updateError) {
       console.error('DB Update Error:', updateError);
       return res.status(500).end();
+    }
+
+    // Send notifications based on status
+    if (order) {
+      if (newStatus === 'approved') {
+        await notifyPaymentApproved({
+          customerName: order.customer_name,
+          customerEmail: order.customer_email,
+          customerPhone: order.customer_phone,
+          totalPrice: order.total_price,
+          shippingMethod: order.shipping_method,
+          orderId: order.id,
+        });
+      } else if (newStatus === 'cancelled') {
+        await notifyPixExpired({
+          customerName: order.customer_name,
+          customerEmail: order.customer_email,
+        });
+      }
     }
 
     return res.status(200).json({ updated: true });
