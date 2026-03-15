@@ -16,6 +16,14 @@ export default async function handler(req, res) {
 
   try {
     const {
+      customerName,
+      customerEmail,
+      customerCpf,
+      customerPhone,
+      customerAddress,
+      quantity,
+      lightColor,
+      totalPrice,
       paymentMethodId,
       token,
       installments,
