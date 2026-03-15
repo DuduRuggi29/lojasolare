@@ -80,6 +80,11 @@
         .btn-pay:disabled, .btn-continue:disabled { opacity: 0.7; cursor: not-allowed; }
 
         .order-summary { position: sticky; top: 80px; }
+        @media (max-width: 768px) { .order-summary { margin-bottom: 20px; } }
+
+        .card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-title { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 16px; border-bottom: 1.5px solid var(--bg); padding-bottom: 10px; }
+
         .product-line { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; }
         .product-line img { width: 56px; border-radius: 8px; }
         .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-top: 10px; }
@@ -295,6 +300,7 @@
                         <div id="card-form-status" class="status-loading">Carregando segurança...</div>
                         <button class="btn-pay" id="form-checkout__submit">FINALIZAR PAGAMENTO</button>
                     </form>
+                </div>
                 </div>
                 <div style="margin-top:20px; font-size:11px; color:var(--muted); text-align:center;">
                     <i class="fas fa-shield-alt"></i> Pagamento 100% seguro processado pelo Mercado Pago.
