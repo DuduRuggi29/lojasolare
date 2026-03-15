@@ -615,72 +615,77 @@
                 </div>
             </div>
             <div class="step-content" id="content-2">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>CEP <span class="req">*</span></label>
-                        <input type="text" id="addr-cep" placeholder="00000-000" maxlength="9" inputmode="numeric">
-                        <span class="field-error" id="err-cep">CEP inválido (8 dígitos).</span>
-                    </div>
-                    <div class="form-group">
-                        <label>Número <span class="req">*</span></label>
-                        <input type="text" id="addr-num" placeholder="123" inputmode="numeric">
-                        <span class="field-error" id="err-num">Informe o número.</span>
-                    </div>
-                </div>
                 <div class="form-group">
-                    <label>Rua / Avenida <span class="req">*</span></label>
-                    <input type="text" id="addr-street" placeholder="Preenchido automaticamente pelo CEP">
-                    <span class="field-error" id="err-street">Informe a rua.</span>
+                    <label>CEP <span class="req">*</span></label>
+                    <input type="text" id="addr-cep" placeholder="00000-000" maxlength="9" inputmode="numeric">
+                    <span class="field-error" id="err-cep">CEP inválido (8 dígitos).</span>
+                    <span id="cep-hint" style="display:block;font-size:12px;color:var(--muted);margin-top:5px;">
+                        <i class="fas fa-info-circle"></i> Digite o CEP para preencher o endereço automaticamente.
+                    </span>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Complemento</label>
-                        <input type="text" id="addr-comp" placeholder="Apto, Sala, Casa">
+
+                <!-- Revealed after 8-digit CEP -->
+                <div id="addr-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Número <span class="req">*</span></label>
+                            <input type="text" id="addr-num" placeholder="123" inputmode="numeric">
+                            <span class="field-error" id="err-num">Informe o número.</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Complemento</label>
+                            <input type="text" id="addr-comp" placeholder="Apto, Sala, Casa">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Bairro <span class="req">*</span></label>
-                        <input type="text" id="addr-neighborhood" placeholder="Seu bairro">
-                        <span class="field-error" id="err-neighborhood">Informe o bairro.</span>
+                        <label>Rua / Avenida <span class="req">*</span></label>
+                        <input type="text" id="addr-street" placeholder="Preenchido automaticamente pelo CEP">
+                        <span class="field-error" id="err-street">Informe a rua.</span>
                     </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Cidade <span class="req">*</span></label>
-                        <input type="text" id="addr-city" placeholder="Sua cidade">
-                        <span class="field-error" id="err-city">Informe a cidade.</span>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Bairro <span class="req">*</span></label>
+                            <input type="text" id="addr-neighborhood" placeholder="Seu bairro">
+                            <span class="field-error" id="err-neighborhood">Informe o bairro.</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Cidade <span class="req">*</span></label>
+                            <input type="text" id="addr-city" placeholder="Sua cidade">
+                            <span class="field-error" id="err-city">Informe a cidade.</span>
+                        </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="max-width:120px;">
                         <label>Estado (UF) <span class="req">*</span></label>
                         <input type="text" id="addr-state" placeholder="RJ" maxlength="2" style="text-transform:uppercase">
                         <span class="field-error" id="err-state">UF inválida.</span>
                     </div>
-                </div>
-                <div class="shipping-options">
-                    <div class="shipping-option selected" onclick="selectShipping('regular', 0, 'Envio Regular (Grátis)')">
-                        <div class="shipping-info">
-                            <div class="radio-circle"><div class="radio-inner"></div></div>
-                            <div>
-                                <span class="shipping-text">Envio Regular</span>
-                                <span class="shipping-eta">4 a 8 dias úteis</span>
+                    <div class="shipping-options">
+                        <div class="shipping-option selected" onclick="selectShipping('regular', 0, 'Envio Regular (Grátis)')">
+                            <div class="shipping-info">
+                                <div class="radio-circle"><div class="radio-inner"></div></div>
+                                <div>
+                                    <span class="shipping-text">Envio Regular</span>
+                                    <span class="shipping-eta">4 a 8 dias úteis</span>
+                                </div>
                             </div>
+                            <span class="shipping-price" style="color:var(--accent)">Grátis</span>
                         </div>
-                        <span class="shipping-price" style="color:var(--accent)">Grátis</span>
-                    </div>
-                    <div class="shipping-option" onclick="selectShipping('express', 19.90, 'Envio Expresso (24h)')">
-                        <div class="shipping-info">
-                            <div class="radio-circle"><div class="radio-inner"></div></div>
-                            <div>
-                                <span class="shipping-text">Envio Expresso</span>
-                                <span class="shipping-eta">Até 24 horas</span>
+                        <div class="shipping-option" onclick="selectShipping('express', 19.90, 'Envio Expresso (24h)')">
+                            <div class="shipping-info">
+                                <div class="radio-circle"><div class="radio-inner"></div></div>
+                                <div>
+                                    <span class="shipping-text">Envio Expresso</span>
+                                    <span class="shipping-eta">Até 24 horas</span>
+                                </div>
                             </div>
+                            <span class="shipping-price">R$ 19,90</span>
                         </div>
-                        <span class="shipping-price">R$ 19,90</span>
                     </div>
+                    <button class="btn-continue" onclick="nextStep(2)">
+                        <span>Confirmar Entrega</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
-                <button class="btn-continue" onclick="nextStep(2)">
-                    <span>Confirmar Entrega</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
             </div>
             <div class="step-summary" id="sum-2">
                 <div class="step-summary-text">
@@ -742,11 +747,13 @@
                         </div>
                         <div class="form-group">
                             <label>Titular do Cartão</label>
-                            <input type="text" id="form-checkout__cardholderName" placeholder="Nome como no cartão" readonly style="background:#f8fafc;color:#555;">
+                            <input type="text" id="form-checkout__cardholderName" placeholder="Nome como no cartão" autocomplete="cc-name">
                         </div>
-                        <!-- Hidden MP fields (required by SDK, not shown to user) -->
-                        <select id="form-checkout__identificationType" class="mp-select" style="display:none;"></select>
-                        <input type="text" id="form-checkout__identificationNumber" style="display:none;" readonly>
+                        <!-- MP SDK fields: visually hidden but accessible to JS (display:none breaks the SDK) -->
+                        <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;" aria-hidden="true">
+                            <select id="form-checkout__identificationType" class="mp-select" tabindex="-1"></select>
+                            <input type="text" id="form-checkout__identificationNumber" tabindex="-1">
+                        </div>
                         <input type="hidden" id="form-checkout__cardholderEmail">
                         <div class="form-group">
                             <label>Parcelas</label>
@@ -887,7 +894,32 @@
         this.value = v;
         this.classList.remove('error');
         document.getElementById('err-cep').classList.remove('show');
+
+        if (v.replace(/\D/g, '').length === 8) {
+            revealAddrFields();
+            fetch(`https://viacep.com.br/ws/${v.replace(/\D/g, '')}/json/`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.erro) {
+                        document.getElementById('addr-street').value = data.logradouro || '';
+                        document.getElementById('addr-neighborhood').value = data.bairro || '';
+                        document.getElementById('addr-city').value = data.localidade || '';
+                        document.getElementById('addr-state').value = data.uf || '';
+                        document.getElementById('addr-num').focus();
+                    }
+                })
+                .catch(() => {});
+        }
     });
+
+    function revealAddrFields() {
+        const fields = document.getElementById('addr-fields');
+        const hint = document.getElementById('cep-hint');
+        if (fields && fields.style.display === 'none') {
+            fields.style.display = 'block';
+            if (hint) hint.style.display = 'none';
+        }
+    }
 
     document.getElementById('addr-state').addEventListener('input', function() {
         this.value = this.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2);
@@ -902,26 +934,7 @@
         });
     });
 
-    // ── CEP LOOKUP ────────────────────────────────────────
-    document.getElementById('addr-cep').addEventListener('blur', function() {
-        const cep = this.value.replace(/\D/g, '');
-        if (cep.length === 8) {
-            fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.erro) {
-                        document.getElementById('addr-street').value = data.logradouro || '';
-                        document.getElementById('addr-neighborhood').value = data.bairro || '';
-                        document.getElementById('addr-city').value = data.localidade || '';
-                        document.getElementById('addr-state').value = data.uf || '';
-                        document.getElementById('addr-num').focus();
-                    } else {
-                        showErr('addr-cep', 'err-cep', 'CEP não encontrado.');
-                    }
-                })
-                .catch(() => {});
-        }
-    });
+    // CEP lookup is handled inside the 'input' listener above (revealAddrFields + fetch)
 
     // ── SHIPPING ──────────────────────────────────────────
     function selectShipping(type, cost, name) {
@@ -1085,6 +1098,12 @@
             setProgReset(i);
         }
 
+        // If re-opening step 2, restore addr-fields visibility if CEP already filled
+        if (n === 2) {
+            const cep = document.getElementById('addr-cep').value.replace(/\D/g, '');
+            if (cep.length === 8) revealAddrFields();
+        }
+
         document.getElementById(`step-${n}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -1223,12 +1242,19 @@
                 })
             });
             const result = await res.json();
-            if (result.qr_code) {
+            if (res.ok && result.qr_code) {
                 window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64)}`;
             } else {
-                alert('Erro ao gerar Pix. Tente novamente.');
+                // Extract actual MP error reason for diagnosis
+                const mpCause = result.details?.cause?.[0]?.description
+                    || result.details?.message
+                    || result.error
+                    || 'Erro desconhecido';
+                console.error('MP Pix error:', result);
+                alert(`Não foi possível gerar o Pix.\nMotivo: ${mpCause}\n\nTente novamente ou use o cartão.`);
             }
         } catch (e) {
+            console.error('Pix fetch error:', e);
             alert('Erro de conexão. Verifique sua internet e tente novamente.');
         } finally {
             document.getElementById('loading-overlay').classList.remove('active');
