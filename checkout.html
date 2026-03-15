@@ -54,12 +54,10 @@
         #form-checkout__cardNumber-container, 
         #form-checkout__expirationDate-container, 
         #form-checkout__securityCode-container {
-            height: 46px; border: 1.5px solid var(--border); border-radius: 8px; background: white;
-            position: relative;
+            height: 48px; border: 1.5px solid var(--border); border-radius: 8px; background: white;
+            position: relative; overflow: hidden;
         }
-        .mp-input-container iframe {
-            width: 100%; height: 100%;
-        }
+        .mp-input-container iframe { width: 100%; height: 100%; border:0; }
 
         .btn-pay { width: 100%; background: var(--accent); color: white; border: none; padding: 18px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); margin-top: 10px; }
         .btn-pay:disabled { opacity: 0.7; cursor: not-allowed; }
@@ -385,10 +383,9 @@
         document.getElementById('card-payment-form').classList.toggle('active', type === 'card');
         
         if (type === 'card' && !window.cardFormInitialized) {
-            console.log('Iniciando Card Form em 100ms...');
-            setTimeout(() => {
-                initCardForm();
-            }, 100);
+            syncFields(); // Sync immediately when opening card tab
+            console.log('Iniciando Card Form robusto...');
+            initCardForm();
         }
     }
 
@@ -420,68 +417,87 @@
     }
 
     function initCardForm() {
+        if (window.cardFormInitialized) return;
         window.cardFormInitialized = true;
-        const cardForm = mp.cardForm({
-            amount: price,
-            iframe: true,
-            form: {
-                id: "form-checkout",
-                cardNumber: { id: "form-checkout__cardNumber-container", placeholder: "Número do cartão" },
-                expirationDate: { id: "form-checkout__expirationDate-container", placeholder: "MM/AA" },
-                securityCode: { id: "form-checkout__securityCode-container", placeholder: "CVC" },
-                installments: { id: "form-checkout__installments" },
-                issuer: { id: "form-checkout__issuer" },
-                cardholderName: { id: "form-checkout__cardholderName" },
-                cardholderEmail: { id: "form-checkout__cardholderEmail" },
-                identificationType: { id: "form-checkout__identificationType" },
-                identificationNumber: { id: "form-checkout__identificationNumber" },
-            },
-            callbacks: {
-                onFormMounted: error => { 
-                    const status = document.getElementById('card-form-status');
-                    if (error) {
-                        console.error("Card Form Mounted error: ", error);
-                        status.innerHTML = '<span class="status-error" onclick="window.location.reload()">Erro ao carregar campos. Clique aqui para recarregar.</span>';
-                    } else {
-                        console.log("Card Form montado com sucesso!");
-                        status.innerHTML = '<span class="status-success">✅ Campos de segurança prontos</span>';
-                    }
+        
+        const status = document.getElementById('card-form-status');
+        
+        try {
+            console.log("Configurando CardForm...");
+            const cardForm = mp.cardForm({
+                amount: price.toString(),
+                iframe: true,
+                form: {
+                    id: "form-checkout",
+                    cardNumber: { id: "form-checkout__cardNumber-container", placeholder: "Número do cartão" },
+                    expirationDate: { id: "form-checkout__expirationDate-container", placeholder: "MM/AA" },
+                    securityCode: { id: "form-checkout__securityCode-container", placeholder: "CVC" },
+                    installments: { id: "form-checkout__installments" },
+                    issuer: { id: "form-checkout__issuer" },
+                    cardholderName: { id: "form-checkout__cardholderName" },
+                    cardholderEmail: { id: "form-checkout__cardholderEmail" },
+                    identificationType: { id: "form-checkout__identificationType" },
+                    identificationNumber: { id: "form-checkout__identificationNumber" },
                 },
-                onSubmit: async event => {
-                    console.log('Submit do cartão acionado');
-                    event.preventDefault();
-                    if (!validateBaseFields()) return;
-                    showLoading(true);
-
-                    const { token, issuerId, paymentMethodId, installments } = cardForm.getCardFormData();
-                    console.log('Token gerado:', token ? 'Sim' : 'Não');
-                    const payload = getBasePayload();
-                    Object.assign(payload, { token, issuerId, paymentMethodId, installments });
-
-                    try {
-                        const res = await fetch('/api/process-payment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        const result = await res.json();
-                        if (result.success) {
-                            if (result.status === 'approved') {
-                                window.location.href = `upsell.html?orderId=${result.orderId}`;
-                            } else {
-                                window.location.href = `obrigado.html?status=${result.status}&type=card`;
-                            }
+                callbacks: {
+                    onFormMounted: error => { 
+                        if (error) {
+                            console.error("Erro ao montar form:", error);
+                            status.innerHTML = `<span class="status-error" style="color:red" onclick="window.location.reload()">⚠️ Erro ao carregar campos. Toque para recarregar a página.</span>`;
+                            window.cardFormInitialized = false;
                         } else {
-                            alert('Erro no pagamento: ' + (result.error || 'Verifique os dados'));
+                            console.log("Card Form montado!");
+                            status.innerHTML = `<span class="status-success" style="color:green">✅ Campos de segurança carregados</span>`;
                         }
-                    } catch (e) {
-                        alert('Erro de conexão');
-                    } finally {
-                        showLoading(false);
+                    },
+                    onIdentificationTypesReceived: (error, identificationTypes) => {
+                        if (error) return console.warn('identificationTypes error: ', error);
+                        console.log('Identification types received: ', identificationTypes);
+                    },
+                    onSubmit: async event => {
+                        event.preventDefault();
+                        if (!validateBaseFields()) return;
+                        
+                        const { token, issuerId, paymentMethodId, installments, cardholderEmail } = cardForm.getCardFormData();
+                        
+                        if (!token) {
+                            alert('Por favor, preencha os dados do cartão corretamente.');
+                            return;
+                        }
+
+                        showLoading(true);
+                        const payload = getBasePayload();
+                        Object.assign(payload, { token, issuerId, paymentMethodId, installments });
+
+                        try {
+                            const res = await fetch('/api/process-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                            const result = await res.json();
+                            if (result.success) {
+                                if (result.status === 'approved') {
+                                    window.location.href = `upsell.html?orderId=${result.orderId}`;
+                                } else {
+                                    window.location.href = `obrigado.html?status=${result.status}&type=card`;
+                                }
+                            } else {
+                                alert('Erro no pagamento: ' + (result.error || 'Verifique seus dados'));
+                            }
+                        } catch (e) {
+                            alert('Erro de conexão com o servidor.');
+                        } finally {
+                            showLoading(false);
+                        }
                     }
                 }
-            }
-        });
+            });
+        } catch (err) {
+            console.error("Falha fatal no SDK:", err);
+            status.innerHTML = `<span class="status-error" onclick="window.location.reload()">⚠️ Falha no sistema de pagamento. Toque para recarregar.</span>`;
+            window.cardFormInitialized = false;
+        }
     }
 
     // ViaCEP Integration
