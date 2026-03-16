@@ -1,6 +1,35 @@
 import { createClient } from '@supabase/supabase-js';
 import { notifyPaymentApproved, notifyPixExpired } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
+import crypto from 'crypto';
+
+function verifyMpSignature(req) {
+  const secret = process.env.MP_WEBHOOK_SECRET;
+  if (!secret) return true; // se ainda não configurado, não bloqueia (mas loga aviso)
+
+  const xSignature = req.headers['x-signature'];
+  const xRequestId = req.headers['x-request-id'];
+  if (!xSignature || !xRequestId) return false;
+
+  const parts = {};
+  xSignature.split(',').forEach(part => {
+    const [k, v] = part.split('=');
+    if (k && v) parts[k.trim()] = v.trim();
+  });
+
+  const { ts, v1: hash } = parts;
+  if (!ts || !hash) return false;
+
+  const paymentId = req.body?.data?.id;
+  const manifest = `id:${paymentId};request-id:${xRequestId};ts:${ts}`;
+  const expected = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(expected, 'hex'));
+  } catch {
+    return false;
+  }
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -14,6 +43,11 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!verifyMpSignature(req)) {
+    console.warn('[Webhook] Invalid signature — request rejected');
+    return res.status(401).json({ error: 'Invalid signature' });
   }
 
   try {

@@ -24,6 +24,11 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    // Só permite upsell em pedidos aprovados via cartão
+    if (order.status !== 'approved' || order.payment_method === 'pix') {
+      return res.status(403).json({ error: 'Upsell not allowed for this order' });
+    }
+
     if (!order.mp_customer_id || !order.mp_card_id) {
       return res.status(400).json({ error: 'No saved card found for this order' });
     }

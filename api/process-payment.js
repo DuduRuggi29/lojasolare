@@ -34,6 +34,34 @@ export default async function handler(req, res) {
       shippingPrice,
     } = req.body;
 
+    // ── Server-side input validation ──
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cpfDigits = String(customerCpf || '').replace(/\D/g, '');
+    const parsedTotal = parseFloat(totalPrice);
+    const parsedQty = parseInt(quantity);
+
+    if (!customerName || String(customerName).trim().split(/\s+/).length < 2) {
+      return res.status(400).json({ error: 'Nome completo obrigatório.' });
+    }
+    if (!emailRegex.test(String(customerEmail || ''))) {
+      return res.status(400).json({ error: 'E-mail inválido.' });
+    }
+    if (cpfDigits.length !== 11) {
+      return res.status(400).json({ error: 'CPF inválido.' });
+    }
+    if (isNaN(parsedTotal) || parsedTotal <= 0 || parsedTotal > 50000) {
+      return res.status(400).json({ error: 'Valor inválido.' });
+    }
+    if (isNaN(parsedQty) || parsedQty < 1 || parsedQty > 100) {
+      return res.status(400).json({ error: 'Quantidade inválida.' });
+    }
+    if (!customerAddress?.cep || String(customerAddress.cep).replace(/\D/g, '').length !== 8) {
+      return res.status(400).json({ error: 'CEP inválido.' });
+    }
+    if (!['pix', 'visa', 'master', 'amex', 'elo', 'hipercard', 'debmaster', 'debvisa'].includes(String(paymentMethodId))) {
+      return res.status(400).json({ error: 'Método de pagamento inválido.' });
+    }
+
     const isPix = paymentMethodId === 'pix';
 
     // Round to 2 decimal places to avoid floating-point issues (e.g. 8 * 0.95 = 7.6000000000000005)

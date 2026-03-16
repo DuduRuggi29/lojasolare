@@ -13,6 +13,11 @@ export default async function handler(req, res) {
   const { payment_id } = req.query;
   if (!payment_id) return res.status(400).json({ error: 'Missing payment_id' });
 
+  // payment_id deve ser numérico (IDs do MP são sempre inteiros)
+  if (!/^\d{1,20}$/.test(String(payment_id))) {
+    return res.status(400).json({ error: 'Invalid payment_id' });
+  }
+
   try {
     const { data: order } = await supabase
       .from('orders')

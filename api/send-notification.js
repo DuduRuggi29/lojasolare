@@ -4,6 +4,15 @@
  */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_FROM = process.env.TWILIO_PHONE_FROM;
@@ -34,7 +43,7 @@ function approvedEmailHTML({ customerName, totalPrice, shippingMethod, orderId }
           <div style="display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:50px;padding:10px 24px;margin-bottom:20px;">
             <span style="color:#16a34a;font-weight:700;font-size:14px;">✅ Pagamento Confirmado</span>
           </div>
-          <h2 style="color:#1a1a1a;margin:0 0 8px;font-size:24px;">Pedido aprovado, ${customerName.split(' ')[0]}! 🎉</h2>
+          <h2 style="color:#1a1a1a;margin:0 0 8px;font-size:24px;">Pedido aprovado, ${escapeHtml(customerName.split(' ')[0])}! 🎉</h2>
           <p style="color:#6b7280;font-size:15px;margin:0 0 28px;line-height:1.6;">
             Recebemos o seu pagamento e seu pedido já está sendo preparado com carinho.
           </p>
@@ -103,7 +112,7 @@ function pixExpiredEmailHTML({ customerName }) {
 
         <tr><td style="padding:32px 40px;text-align:center;">
           <div style="font-size:48px;margin-bottom:16px;">⏱️</div>
-          <h2 style="color:#1a1a1a;margin:0 0 12px;font-size:22px;">Seu Pix expirou, ${customerName.split(' ')[0]}.</h2>
+          <h2 style="color:#1a1a1a;margin:0 0 12px;font-size:22px;">Seu Pix expirou, ${escapeHtml(customerName.split(' ')[0])}.</h2>
           <p style="color:#6b7280;font-size:15px;margin:0 0 28px;line-height:1.7;">
             O código Pix gerado expirou sem pagamento confirmado. 
             Mas fique tranquilo — seus produtos continuam disponíveis!
@@ -240,7 +249,7 @@ function pixReminderEmailHTML({ customerName, pixCode }) {
         <tr><td style="padding:32px 40px;text-align:center;">
           <div style="font-size:44px;margin-bottom:12px;">⏳</div>
           <h2 style="color:#1a1a1a;margin:0 0 10px;font-size:22px;">
-            Seu Pix está esperando, ${customerName.split(' ')[0]}!
+            Seu Pix está esperando, ${escapeHtml(customerName.split(' ')[0])}!
           </h2>
           <p style="color:#6b7280;font-size:15px;margin:0 0 24px;line-height:1.7;">
             Identificamos que você gerou um Pix mas ainda não concluiu o pagamento.<br>
