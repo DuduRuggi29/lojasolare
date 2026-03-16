@@ -1459,14 +1459,16 @@
                             if (!res.ok) {
                                 const reason = result.details?.cause?.[0]?.description || result.details?.message || result.error || 'Erro desconhecido';
                                 console.error('Card payment error:', result);
+                                if (typeof fbq !== 'undefined') { fbq('track','Purchase',{value:price+selectedShippingPrice,currency:'BRL',content_ids:['solare-luminaria'],content_type:'product'}); fbq('trackCustom','PurchaseNewClient',{value:price+selectedShippingPrice,currency:'BRL'}); fbq('trackCustom','PurchaseCard',{value:price+selectedShippingPrice,currency:'BRL'}); }
                                 alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
                             } else if (result.status === 'approved') {
                                 window.location.href = `/obrigado.html?id=${result.id}&type=card&total=${price+selectedShippingPrice}`;
                             } else if (result.status === 'in_process' || result.status === 'pending') {
-                                window.location.href = `/obrigado.html?id=${result.id}&type=card&status=${result.status}`;
+                                window.location.href = `/obrigado.html?id=${result.id}&type=card&status=${result.status}&total=${price+selectedShippingPrice}`;
                             } else {
                                 const reason = result.status_detail || 'Verifique os dados ou o limite do cartão.';
                                 console.error('Card payment declined:', result);
+                                if (typeof fbq !== 'undefined') { fbq('track','Purchase',{value:price+selectedShippingPrice,currency:'BRL',content_ids:['solare-luminaria'],content_type:'product'}); fbq('trackCustom','PurchaseNewClient',{value:price+selectedShippingPrice,currency:'BRL'}); fbq('trackCustom','PurchaseCard',{value:price+selectedShippingPrice,currency:'BRL'}); }
                                 alert(`Pagamento recusado: ${reason}`);
                             }
                         } catch (e) {

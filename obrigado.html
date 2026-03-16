@@ -139,12 +139,17 @@
     const isUpsell = params.get('upsell') === 'true';
     const orderTotal = parseFloat(params.get('total') || '0');
 
-    // Purchase: cartão aprovado na hora OU Pix gerado (QR code exibido)
-    if (orderTotal > 0 && (
-        (type === 'card' && !status) ||
-        (type === 'pix' && status === 'pending')
-    )) {
+    // Pix: QR Code gerado
+    if (type === 'pix' && status === 'pending') {
         fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', content_ids: ['solare-luminaria'], content_type: 'product' });
+        fbq('trackCustom', 'PurchaseNewClient', { value: orderTotal, currency: 'BRL' });
+        fbq('trackCustom', 'PurchasePix', { value: orderTotal, currency: 'BRL' });
+    }
+    // Cartão: qualquer resultado (aprovado ou aguardando)
+    if (type === 'card') {
+        fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', content_ids: ['solare-luminaria'], content_type: 'product' });
+        fbq('trackCustom', 'PurchaseNewClient', { value: orderTotal, currency: 'BRL' });
+        fbq('trackCustom', 'PurchaseCard', { value: orderTotal, currency: 'BRL' });
     }
 
     if (isUpsell) {
@@ -221,9 +226,6 @@
     }
 
     function showSuccess() {
-        if (typeof fbq !== 'undefined' && orderTotal > 0) {
-            fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', content_ids: ['solare-luminaria'], content_type: 'product' });
-        }
         document.getElementById('urgency-banner').style.display = 'none';
         document.getElementById('pix-area').style.display = 'none';
         document.getElementById('status-icon').className = 'icon success';
