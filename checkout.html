@@ -87,47 +87,48 @@
             .order-summary { order: -1; }
         }
 
-        /* ── PROGRESS BAR ── */
-        .progress-bar {
-            display: flex;
-            align-items: center;
-            margin-bottom: 18px;
+        /* ── OFFER BANNER ── */
+        .offer-banner {
+            background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
         }
-        .progress-step {
-            display: flex;
-            align-items: center;
-            gap: 7px;
+        .offer-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
         }
-        .progress-connector {
-            flex: 1;
-            height: 2px;
-            background: var(--border);
-            margin: 0 6px;
-            border-radius: 2px;
-            transition: background 0.4s;
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
-        .progress-connector.done { background: var(--accent); }
-        .p-dot {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 2px solid var(--border);
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            transition: all 0.3s;
-            flex-shrink: 0;
+        .offer-title {
+            display: block;
+            font-size: 15px;
+            font-weight: 800;
+            color: #fbbf24;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
         }
-        .progress-step.active .p-dot { border-color: var(--primary); background: var(--primary); color: white; }
-        .progress-step.done .p-dot { border-color: var(--accent); background: var(--accent); color: white; }
-        .p-label { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; transition: color 0.3s; }
-        .progress-step.active .p-label { color: var(--primary); }
-        .progress-step.done .p-label { color: var(--accent); }
-        @media (max-width: 400px) { .p-label { display: none; } }
+        .offer-text {
+            display: block;
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.95);
+            font-weight: 500;
+        }
+        .offer-text strong { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 
         /* ── STEP CARDS ── */
         .step-card {
@@ -162,20 +163,8 @@
             text-transform: uppercase;
         }
         .step-number {
-            width: 26px;
-            height: 26px;
-            background: var(--primary);
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            flex-shrink: 0;
-            transition: all 0.3s;
+            display: none;
         }
-        .step-number.done { background: var(--accent); }
         .step-header.locked { opacity: 0.45; }
         .step-header.locked .step-number { background: #cbd5e1; }
 
@@ -661,28 +650,12 @@
 <main class="checkout-main">
     <div class="checkout-steps">
 
-        <!-- PROGRESS BAR -->
-        <div class="progress-bar">
-            <div class="progress-step active" id="prog-1">
-                <div class="p-dot" id="pdot-1">1</div>
-                <span class="p-label">Dados</span>
-            </div>
-            <div class="progress-connector" id="pcon-1"></div>
-            <div class="progress-step" id="prog-2">
-                <div class="p-dot" id="pdot-2">2</div>
-                <span class="p-label">Endereço</span>
-            </div>
-            <div class="progress-connector" id="pcon-2"></div>
-            <div class="progress-step" id="prog-3">
-                <div class="p-dot" id="pdot-3">3</div>
-                <span class="p-label">Frete</span>
-            </div>
-            <div class="progress-connector" id="pcon-3"></div>
-            <div class="progress-step" id="prog-4">
-                <div class="p-dot" id="pdot-4">4</div>
-                <span class="p-label">Pagamento</span>
-            </div>
-        </div>
+        <!-- OFFER BANNER -->
+        <section class="offer-banner">
+            <span class="offer-title">🎁 PARABÉNS! VOCÊ FOI SELECIONADO!</span>
+            <span class="offer-text">Você acaba de ganhar <strong>90 DIAS DE GARANTIA</strong> + <strong>5% OFF no Pix</strong>.</span>
+            <span class="offer-text" style="font-size: 11px; opacity: 0.9; margin-top: 5px;">🔥 Aproveite: Hoje é o <u>último dia</u> com Frete Grátis disponível.</span>
+        </section>
 
         <!-- STEP 1: DADOS PESSOAIS -->
         <div class="step-card is-active" id="step-1">
@@ -1221,28 +1194,6 @@
         return ok;
     }
 
-    // ── PROGRESS & STEPS ─────────────────────────────────
-    function setProgDone(n) {
-        const dot = document.getElementById(`pdot-${n}`);
-        if (dot) { dot.innerHTML = '<i class="fas fa-check" style="font-size:10px;"></i>'; }
-        document.getElementById(`prog-${n}`)?.classList.replace('active','done') ||
-        document.getElementById(`prog-${n}`)?.classList.add('done');
-        if (n < 4) document.getElementById(`pcon-${n}`)?.classList.add('done');
-    }
-    function setProgActive(n) {
-        const prog = document.getElementById(`prog-${n}`);
-        if (prog) { prog.classList.remove('done'); prog.classList.add('active'); }
-        const dot = document.getElementById(`pdot-${n}`);
-        if (dot && !dot.querySelector('i.fa-check')) dot.textContent = n;
-    }
-    function setProgReset(n) {
-        const prog = document.getElementById(`prog-${n}`);
-        if (prog) { prog.classList.remove('done','active'); }
-        const dot = document.getElementById(`pdot-${n}`);
-        if (dot) dot.textContent = n;
-        if (n <= 4) document.getElementById(`pcon-${n-1}`)?.classList.remove('done');
-    }
-
     function nextStep(n) {
         const valid = n === 1 ? validateStep1() : n === 2 ? validateStep2() : true;
         if (!valid) return;
@@ -1268,9 +1219,6 @@
         document.getElementById(`head-${n}`).classList.remove('active');
         document.getElementById(`sum-${n}`).classList.add('show');
         document.getElementById(`step-${n}`).classList.remove('is-active');
-        const snum = document.getElementById(`snum-${n}`);
-        if (snum) { snum.innerHTML = '<i class="fas fa-check" style="font-size:10px;"></i>'; snum.classList.add('done'); }
-        setProgDone(n);
 
         // Open next step
         const next = n + 1;
@@ -1279,7 +1227,6 @@
             document.getElementById(`head-${next}`).classList.add('active');
             document.getElementById(`head-${next}`).classList.remove('locked');
             document.getElementById(`step-${next}`).classList.add('is-active');
-            setProgActive(next);
             if (next === 4) syncFields();
             setTimeout(() => {
                 document.getElementById(`step-${next}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1304,18 +1251,10 @@
         document.getElementById(`head-${n}`).classList.add('active');
         document.getElementById(`step-${n}`).classList.add('is-active');
 
-        // Reset step n number
-        const snum = document.getElementById(`snum-${n}`);
-        if (snum) { snum.innerHTML = n; snum.classList.remove('done'); }
-        setProgActive(n);
-
-        // Lock and reset steps after n
+        // Lock steps after n
         for (let i = n + 1; i <= 4; i++) {
             document.getElementById(`head-${i}`)?.classList.add('locked');
             document.getElementById(`head-${i}`)?.classList.remove('active');
-            const s = document.getElementById(`snum-${i}`);
-            if (s) { s.innerHTML = i; s.classList.remove('done'); }
-            setProgReset(i);
         }
 
         // If re-opening step 2, restore addr-fields visibility if CEP already filled
