@@ -139,8 +139,11 @@
     const isUpsell = params.get('upsell') === 'true';
     const orderTotal = parseFloat(params.get('total') || '0');
 
-    // Fire Purchase for card approved immediately (Pix fires in showSuccess)
-    if (type === 'card' && !status && orderTotal > 0) {
+    // Purchase: cartão aprovado na hora OU Pix gerado (QR code exibido)
+    if (orderTotal > 0 && (
+        (type === 'card' && !status) ||
+        (type === 'pix' && status === 'pending')
+    )) {
         fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', content_ids: ['solare-luminaria'], content_type: 'product' });
     }
 

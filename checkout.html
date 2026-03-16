@@ -1516,16 +1516,6 @@
             const result = await res.json();
             if (res.ok && result.qr_code) {
                 const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
-                // Purchase ao gerar o QR Code (intenção de pagamento confirmada)
-                if (typeof fbq !== 'undefined') {
-                    fbq('track', 'Purchase', {
-                        value: pixTotal,
-                        currency: 'BRL',
-                        content_ids: ['solare-luminaria'],
-                        content_type: 'product',
-                        num_items: qty,
-                    });
-                }
                 window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
             } else {
                 const mpCause = result.details?.cause?.[0]?.description
