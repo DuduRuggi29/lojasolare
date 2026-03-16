@@ -23,8 +23,68 @@
         .qr-code { width: 200px; height: 200px; margin: 0 auto 15px; }
         .qr-code img { width: 100%; }
         .copy-box { background: white; border: 1px solid #eee; padding: 10px; border-radius: 8px; font-size: 12px; word-break: break-all; margin-bottom: 10px; color: #333; }
-        .btn-copy { background: #1a1a1a; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; }
-        
+        .btn-copy { background: #1a1a1a; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; font-family: 'Inter', sans-serif; font-size: 14px; }
+        .btn-copy:active { opacity: 0.85; }
+
+        /* ── COUNTDOWN ── */
+        .urgency-banner {
+            background: #fff8ed;
+            border: 1.5px solid #f97316;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .urgency-banner.critical {
+            background: #fff1f1;
+            border-color: #ef4444;
+            animation: pulse-border 1s ease-in-out infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+        }
+        .urgency-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #ea580c;
+        }
+        .urgency-banner.critical .urgency-label { color: #dc2626; }
+        .countdown-display {
+            font-size: 36px;
+            font-weight: 800;
+            color: #ea580c;
+            letter-spacing: 2px;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .urgency-banner.critical .countdown-display { color: #dc2626; }
+        .urgency-msg {
+            font-size: 12px;
+            color: #9a3412;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .urgency-banner.critical .urgency-msg { color: #991b1b; font-weight: 600; }
+
+        /* ── EXPIRED ── */
+        .pix-expired-msg {
+            display: none;
+            background: #fff1f1;
+            border: 1.5px solid #ef4444;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .pix-expired-msg p { color: #dc2626; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+        .pix-expired-msg span { font-size: 12px; color: #7f1d1d; }
+
         .btn-home { display: block; text-decoration: none; color: #2e7d32; font-weight: 700; border: 1px solid #2e7d32; padding: 12px; border-radius: 8px; transition: 0.2s; }
         .btn-home:hover { background: #f1f8e9; }
     </style>
@@ -38,6 +98,20 @@
 
     <!-- Pix Area -->
     <div id="pix-area" style="display: none;">
+
+        <!-- Countdown Timer -->
+        <div class="urgency-banner" id="urgency-banner">
+            <span class="urgency-label">⚠️ Pague agora — código expirando</span>
+            <div class="countdown-display" id="countdown-display">10:00</div>
+            <span class="urgency-msg" id="urgency-msg">Finalize seu pagamento antes que o código Pix expire!</span>
+        </div>
+
+        <!-- Expired Message -->
+        <div class="pix-expired-msg" id="pix-expired-msg">
+            <p>⛔ Seu código Pix expirou!</p>
+            <span>Volte à loja e gere um novo Pix para concluir sua compra.</span>
+        </div>
+
         <div class="pix-container">
             <div class="qr-code">
                 <img id="qr-img" src="" alt="QR Code Pix">
@@ -78,11 +152,43 @@
         if (paymentId) {
             startPixPolling(paymentId);
         }
+
+        // Iniciar cronômetro de 10 minutos
+        startCountdown();
     } else if (status === 'rejected') {
         document.getElementById('status-icon').className = 'icon failure';
         document.getElementById('status-icon').innerHTML = '<i class="fas fa-times-circle"></i>';
         document.getElementById('status-title').innerText = 'Pagamento Recusado';
         document.getElementById('status-desc').innerText = 'Não foi possível processar seu cartão. Tente novamente.';
+    }
+
+    function startCountdown() {
+        let seconds = 600; // 10 minutes
+        const display = document.getElementById('countdown-display');
+        const banner = document.getElementById('urgency-banner');
+        const msg = document.getElementById('urgency-msg');
+        const expiredMsg = document.getElementById('pix-expired-msg');
+
+        const tick = setInterval(() => {
+            seconds--;
+
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            display.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+            if (seconds <= 120 && seconds > 0) {
+                banner.classList.add('critical');
+                msg.textContent = 'Atenção! Seu código Pix está prestes a expirar. Pague agora!';
+            }
+
+            if (seconds <= 0) {
+                clearInterval(tick);
+                banner.style.display = 'none';
+                expiredMsg.style.display = 'block';
+                document.getElementById('pix-area').querySelector('.pix-container').style.opacity = '0.4';
+                document.getElementById('pix-area').querySelector('.pix-container').style.pointerEvents = 'none';
+            }
+        }, 1000);
     }
 
     async function startPixPolling(id) {
@@ -102,6 +208,7 @@
     }
 
     function showSuccess() {
+        document.getElementById('urgency-banner').style.display = 'none';
         document.getElementById('pix-area').style.display = 'none';
         document.getElementById('status-icon').className = 'icon success';
         document.getElementById('status-icon').innerHTML = '<i class="fas fa-check-circle"></i>';
