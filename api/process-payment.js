@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { notifyPaymentApproved, schedulePixReminder } from './send-notification.js';
+import { sendMetaEvent } from './meta-capi.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -135,6 +136,32 @@ export default async function handler(req, res) {
           pixCode: pixQrCode,
         }).catch(e => console.error('Pix reminder schedule failed (non-fatal):', e));
       }
+    }
+
+    // Fire Meta CAPI Purchase for immediately approved payments (card)
+    if (mpResult.status === 'approved') {
+      sendMetaEvent({
+        eventName: 'Purchase',
+        eventSourceUrl: 'https://lojassolare.com.br/obrigado.html',
+        userData: {
+          email: customerEmail,
+          phone: customerPhone,
+          firstName: firstName,
+          lastName: lastName,
+          cpf: customerCpf,
+          city: customerAddress?.city,
+          state: customerAddress?.state,
+          zip: customerAddress?.cep,
+        },
+        customData: {
+          value: transactionAmount,
+          currency: 'BRL',
+          content_ids: ['solare-luminaria'],
+          content_type: 'product',
+          num_items: quantity,
+        },
+        eventId: `purchase-${mpResult.id}`,
+      }).catch(e => console.error('Meta CAPI Purchase failed (non-fatal):', e));
     }
 
     // For card payments approved immediately, notify and save card for 1-click upsell

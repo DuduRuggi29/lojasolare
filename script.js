@@ -61,6 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkoutBtn = document.querySelector('.btn-checkout');
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', () => {
+            if (typeof fbq !== 'undefined') {
+                fbq('track', 'AddToCart', {
+                    content_name: 'Luminária Solar Solare',
+                    content_ids: ['solare-luminaria'],
+                    content_type: 'product',
+                    value: currentSelectedPrice,
+                    currency: 'BRL',
+                    num_items: currentSelectedQty,
+                });
+            }
             const params = new URLSearchParams({
                 qty: currentSelectedQty,
                 price: currentSelectedPrice,

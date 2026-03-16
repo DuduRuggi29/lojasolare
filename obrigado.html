@@ -7,6 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Meta Pixel Code -->
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','878359704804021');fbq('track','PageView');</script>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=878359704804021&ev=PageView&noscript=1"/></noscript>
+    <!-- End Meta Pixel Code -->
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: #f5f7f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; color: #1a1a1a; }
@@ -133,6 +137,12 @@
     const pixImg = params.get('qr_code_base64');
     const paymentId = params.get('id');
     const isUpsell = params.get('upsell') === 'true';
+    const orderTotal = parseFloat(params.get('total') || '0');
+
+    // Fire Purchase for card approved immediately (Pix fires in showSuccess)
+    if (type === 'card' && !status && orderTotal > 0) {
+        fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', content_ids: ['solare-luminaria'], content_type: 'product' });
+    }
 
     if (isUpsell) {
         document.getElementById('status-title').innerText = 'Oferta Adicionada com Sucesso!';
@@ -208,6 +218,9 @@
     }
 
     function showSuccess() {
+        if (typeof fbq !== 'undefined' && orderTotal > 0) {
+            fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', content_ids: ['solare-luminaria'], content_type: 'product' });
+        }
         document.getElementById('urgency-banner').style.display = 'none';
         document.getElementById('pix-area').style.display = 'none';
         document.getElementById('status-icon').className = 'icon success';

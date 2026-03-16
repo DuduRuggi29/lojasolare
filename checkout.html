@@ -703,6 +703,10 @@
         .step-header.locked .step-header-icon { opacity: 0.35; }
 
     </style>
+    <!-- Meta Pixel Code -->
+    <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','878359704804021');fbq('track','PageView');(function(){const p=new URLSearchParams(window.location.search);const v=parseFloat(p.get('price')||'8');const q=parseInt(p.get('qty')||'1');fbq('track','InitiateCheckout',{content_name:'Luminária Solar Solare',content_ids:['solare-luminaria'],content_type:'product',value:v,currency:'BRL',num_items:q});})();</script>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=878359704804021&ev=PageView&noscript=1"/></noscript>
+    <!-- End Meta Pixel Code -->
 </head>
 <body>
 
@@ -1411,6 +1415,7 @@
                         const data = cardFormInstance.getCardFormData();
                         if (!data.token) { alert('Verifique os dados do cartão e tente novamente.'); return; }
                         if (!data.paymentMethodId) { alert('Bandeira do cartão não reconhecida. Verifique o número.'); return; }
+                        if (typeof fbq !== 'undefined') fbq('track', 'AddPaymentInfo', {content_ids:['solare-luminaria'],content_type:'product',value:price+selectedShippingPrice,currency:'BRL'});
                         document.getElementById('loading-overlay').classList.add('active');
                         try {
                             const res = await fetch('/api/process-payment', {
@@ -1446,7 +1451,7 @@
                                 console.error('Card payment error:', result);
                                 alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
                             } else if (result.status === 'approved') {
-                                window.location.href = `/obrigado.html?id=${result.id}&type=card`;
+                                window.location.href = `/obrigado.html?id=${result.id}&type=card&total=${price+selectedShippingPrice}`;
                             } else if (result.status === 'in_process' || result.status === 'pending') {
                                 window.location.href = `/obrigado.html?id=${result.id}&type=card&status=${result.status}`;
                             } else {
@@ -1472,6 +1477,7 @@
     // ── PIX PAYMENT ───────────────────────────────────────
     async function payWithPix() {
         if (!validateStep1() || !validateStep2()) return;
+        if (typeof fbq !== 'undefined') fbq('track', 'AddPaymentInfo', {content_ids:['solare-luminaria'],content_type:'product',value:(price+selectedShippingPrice)*0.95,currency:'BRL'});
         document.getElementById('loading-overlay').classList.add('active');
         try {
             const res = await fetch('/api/process-payment', {
@@ -1500,7 +1506,8 @@
             });
             const result = await res.json();
             if (res.ok && result.qr_code) {
-                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
+                const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
+                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
             } else {
                 const mpCause = result.details?.cause?.[0]?.description
                     || result.details?.message

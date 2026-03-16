@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { notifyPaymentApproved, notifyPixExpired } from './send-notification.js';
+import { sendMetaEvent } from './meta-capi.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -78,6 +79,32 @@ export default async function handler(req, res) {
           shippingMethod: order.shipping_method,
           orderId: order.id,
         });
+
+        // Meta CAPI Purchase (especially important for Pix — browser pixel may not fire)
+        const nameParts = (order.customer_name || '').trim().split(/\s+/);
+        const addr = order.customer_address || {};
+        sendMetaEvent({
+          eventName: 'Purchase',
+          eventSourceUrl: 'https://lojassolare.com.br/obrigado.html',
+          userData: {
+            email: order.customer_email,
+            phone: order.customer_phone,
+            firstName: nameParts[0],
+            lastName: nameParts.slice(1).join(' ') || nameParts[0],
+            cpf: order.customer_cpf,
+            city: addr.city,
+            state: addr.state,
+            zip: addr.cep,
+          },
+          customData: {
+            value: parseFloat(order.total_price) || 0,
+            currency: 'BRL',
+            content_ids: ['solare-luminaria'],
+            content_type: 'product',
+            num_items: order.product_quantity || 1,
+          },
+          eventId: `purchase-${paymentId}`,
+        }).catch(e => console.error('Meta CAPI Purchase (webhook) failed:', e));
       } else if (newStatus === 'cancelled') {
         await notifyPixExpired({
           customerName: order.customer_name,
