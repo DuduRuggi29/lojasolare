@@ -538,45 +538,6 @@
             padding: 5px 8px;
         }
 
-        /* ── QTY CONTROL (order summary) ── */
-        .qty-control {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            margin: 0 0 14px;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .qty-btn {
-            width: 32px;
-            height: 32px;
-            border: 1.5px solid var(--border);
-            border-radius: 50%;
-            background: white;
-            font-size: 20px;
-            line-height: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-weight: 700;
-            transition: all 0.15s;
-            font-family: 'Inter', sans-serif;
-            flex-shrink: 0;
-        }
-        .qty-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
-        .qty-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .qty-btn:disabled:hover { background: white; color: var(--primary); border-color: var(--border); }
-        .qty-display {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-            min-width: 28px;
-            text-align: center;
-        }
-
         /* ── FOOTER ── */
         .checkout-footer {
             background: var(--primary);
@@ -902,11 +863,6 @@
     <aside class="order-summary">
         <div class="summary-card">
             <div class="summary-card-title">Resumo do Pedido</div>
-            <div class="qty-control">
-                <button class="qty-btn" id="qty-btn-minus" onclick="changeQty(-1)">−</button>
-                <span class="qty-display" id="qty-display">1</span>
-                <button class="qty-btn" id="qty-btn-plus" onclick="changeQty(1)">+</button>
-            </div>
             <div class="product-line">
                 <img id="sum-img" src="luminaria-warm.png" alt="Luminária Solare">
                 <div class="product-info">
@@ -976,14 +932,6 @@
         const total = sub + selectedShippingPrice;
         const shipTxt = selectedShippingPrice === 0 ? 'Grátis' : fmt(selectedShippingPrice);
 
-        // Qty buttons state
-        const btnMinus = document.getElementById('qty-btn-minus');
-        const btnPlus = document.getElementById('qty-btn-plus');
-        const qtyEl = document.getElementById('qty-display');
-        if (qtyEl) qtyEl.textContent = qty;
-        if (btnMinus) btnMinus.disabled = qty <= 1;
-        if (btnPlus) btnPlus.disabled = qty >= 10;
-
         // Variant label
         document.getElementById('sum-variant').textContent = `${qty} unid. — ${light === 'warm' ? 'Luz Quente' : 'Luz Branca'}`;
 
@@ -1002,13 +950,6 @@
         if (payShip) payShip.textContent = shipTxt;
         if (payTotal) payTotal.textContent = fmt(total);
         if (payPix) payPix.textContent = fmt(total * 0.95);
-    }
-
-    function changeQty(delta) {
-        const newQty = qty + delta;
-        if (newQty < 1 || newQty > 10) return;
-        qty = newQty;
-        updateTotalDisplay();
     }
 
     updateTotalDisplay();

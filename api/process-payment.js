@@ -35,14 +35,21 @@ export default async function handler(req, res) {
 
     const isPix = paymentMethodId === 'pix';
 
+    // Round to 2 decimal places to avoid floating-point issues (e.g. 8 * 0.95 = 7.6000000000000005)
+    const transactionAmount = Math.round(parseFloat(totalPrice) * 100) / 100;
+
+    const nameParts = customerName.trim().split(/\s+/);
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || firstName;
+
     const paymentData = {
-      transaction_amount: parseFloat(totalPrice),
+      transaction_amount: transactionAmount,
       description: `Luminária Solar Solare - Kit ${quantity} unidades`,
       payment_method_id: paymentMethodId,
       payer: {
-        email: customerEmail,
-        first_name: customerName.split(' ')[0],
-        last_name: customerName.split(' ').slice(1).join(' '),
+        email: customerEmail.trim().toLowerCase(),
+        first_name: firstName,
+        last_name: lastName,
         identification: {
           type: 'CPF',
           number: customerCpf.replace(/\D/g, ''),
@@ -50,10 +57,10 @@ export default async function handler(req, res) {
         address: {
           zip_code: customerAddress.cep.replace(/\D/g, ''),
           street_name: customerAddress.street,
-          street_number: customerAddress.number,
+          street_number: String(customerAddress.number),
           neighborhood: customerAddress.neighborhood,
           city: customerAddress.city,
-          federal_unit: customerAddress.state,
+          federal_unit: customerAddress.state.toUpperCase(),
         },
       },
       ...(process.env.SITE_URL && { notification_url: `${process.env.SITE_URL}/api/mp-webhook` }),
