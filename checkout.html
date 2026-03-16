@@ -1309,7 +1309,18 @@
             document.getElementById(`head-${next}`).classList.add('active');
             document.getElementById(`head-${next}`).classList.remove('locked');
             document.getElementById(`step-${next}`).classList.add('is-active');
-            if (next === 4) syncFields();
+            if (next === 4) {
+                syncFields();
+                if (typeof fbq !== 'undefined') {
+                    fbq('track', 'AddPaymentInfo', {
+                        content_ids: ['solare-luminaria'],
+                        content_type: 'product',
+                        value: price + selectedShippingPrice,
+                        currency: 'BRL',
+                        num_items: qty,
+                    });
+                }
+            }
             setTimeout(() => {
                 document.getElementById(`step-${next}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 60);
@@ -1415,7 +1426,6 @@
                         const data = cardFormInstance.getCardFormData();
                         if (!data.token) { alert('Verifique os dados do cartão e tente novamente.'); return; }
                         if (!data.paymentMethodId) { alert('Bandeira do cartão não reconhecida. Verifique o número.'); return; }
-                        if (typeof fbq !== 'undefined') fbq('track', 'AddPaymentInfo', {content_ids:['solare-luminaria'],content_type:'product',value:price+selectedShippingPrice,currency:'BRL'});
                         document.getElementById('loading-overlay').classList.add('active');
                         try {
                             const res = await fetch('/api/process-payment', {
@@ -1477,7 +1487,6 @@
     // ── PIX PAYMENT ───────────────────────────────────────
     async function payWithPix() {
         if (!validateStep1() || !validateStep2()) return;
-        if (typeof fbq !== 'undefined') fbq('track', 'AddPaymentInfo', {content_ids:['solare-luminaria'],content_type:'product',value:(price+selectedShippingPrice)*0.95,currency:'BRL'});
         document.getElementById('loading-overlay').classList.add('active');
         try {
             const res = await fetch('/api/process-payment', {
@@ -1507,6 +1516,16 @@
             const result = await res.json();
             if (res.ok && result.qr_code) {
                 const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
+                // Purchase ao gerar o QR Code (intenção de pagamento confirmada)
+                if (typeof fbq !== 'undefined') {
+                    fbq('track', 'Purchase', {
+                        value: pixTotal,
+                        currency: 'BRL',
+                        content_ids: ['solare-luminaria'],
+                        content_type: 'product',
+                        num_items: qty,
+                    });
+                }
                 window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
             } else {
                 const mpCause = result.details?.cause?.[0]?.description
