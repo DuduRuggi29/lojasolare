@@ -139,6 +139,7 @@
 
         /* ── STEP CARDS ── */
         .step-card {
+            display: none;
             background: var(--card);
             border-radius: var(--radius);
             border: 1px solid var(--border);
@@ -147,6 +148,8 @@
             box-shadow: var(--shadow);
             transition: box-shadow 0.25s;
         }
+        .step-card.is-active,
+        .step-card.is-done { display: block; }
         .step-card.is-active { box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 2px rgba(44,76,59,0.18); border-color: rgba(44,76,59,0.18); }
 
         .step-header {
@@ -1301,6 +1304,7 @@
         document.getElementById(`head-${n}`).classList.remove('active');
         document.getElementById(`sum-${n}`).classList.add('show');
         document.getElementById(`step-${n}`).classList.remove('is-active');
+        document.getElementById(`step-${n}`).classList.add('is-done');
 
         // Open next step
         const next = n + 1;
@@ -1328,15 +1332,16 @@
     }
 
     function editStep(n) {
-        // Close all content, remove all summaries
+        // Close all content, remove all summaries and states
         document.querySelectorAll('.step-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.step-header').forEach(h => h.classList.remove('active'));
         document.querySelectorAll('.step-summary').forEach(s => s.classList.remove('show'));
-        document.querySelectorAll('.step-card').forEach(c => c.classList.remove('is-active'));
+        document.querySelectorAll('.step-card').forEach(c => { c.classList.remove('is-active'); c.classList.remove('is-done'); });
 
-        // Restore summaries for steps completed before n
+        // Restore steps before n as done (visible summary)
         for (let i = 1; i < n; i++) {
             document.getElementById(`sum-${i}`)?.classList.add('show');
+            document.getElementById(`step-${i}`)?.classList.add('is-done');
         }
 
         // Open step n
