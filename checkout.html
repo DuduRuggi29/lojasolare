@@ -560,6 +560,90 @@
         .footer-contact a:hover { color: #fff; }
         .footer-policies-notice { font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 14px; line-height: 1.5; }
         .footer-legal { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; }
+        /* ── TESTIMONIAL SLIDER ── */
+        .testimonial-section {
+            max-width: 980px;
+            margin: 20px auto;
+            padding: 24px 20px;
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            text-align: left;
+            overflow: hidden;
+            position: relative;
+        }
+        @media (max-width: 980px) {
+            .testimonial-section { margin: 15px 10px; }
+        }
+        .testimonial-container {
+            position: relative;
+            min-height: 100px;
+        }
+        .testimonial-item {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .testimonial-item.active {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .testimonial-photo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-light);
+            flex-shrink: 0;
+        }
+        .testimonial-content {
+            flex: 1;
+        }
+        .testimonial-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .testimonial-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .verified-badge {
+            color: #1d9bf0;
+            font-size: 12px;
+        }
+        .testimonial-text {
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .slider-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: #cbd5e1;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            background: var(--primary);
+            width: 18px;
+            border-radius: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
@@ -891,6 +975,48 @@
         </div>
     </aside>
 </main>
+
+
+    <!-- TESTIMONIAL SLIDER -->
+    <section class="testimonial-section">
+        <div class="testimonial-container" id="testimonial-container">
+            <div class="testimonial-item active">
+                <img src="review-denise.png" alt="Denise" class="testimonial-photo">
+                <div class="testimonial-content">
+                    <div class="testimonial-name-row">
+                        <span class="testimonial-name">Denise Nascimento</span>
+                        <i class="fas fa-check-circle verified-badge"></i>
+                    </div>
+                    <p class="testimonial-text">Luminária excelente, ilumina muito bem o quintal. A Solare entregou muito rápido!</p>
+                </div>
+            </div>
+            <div class="testimonial-item">
+                <img src="review-claudia.png" alt="Claudia" class="testimonial-photo">
+                <div class="testimonial-content">
+                    <div class="testimonial-name-row">
+                        <span class="testimonial-name">Claudia Silva</span>
+                        <i class="fas fa-check-circle verified-badge"></i>
+                    </div>
+                    <p class="testimonial-text">Melhor compra que fiz pro jardim. Loja muito boa e entrega super veloz. Recomendo!</p>
+                </div>
+            </div>
+            <div class="testimonial-item">
+                <img src="review-katia.png" alt="Katia" class="testimonial-photo">
+                <div class="testimonial-content">
+                    <div class="testimonial-name-row">
+                        <span class="testimonial-name">Kátia Lins</span>
+                        <i class="fas fa-check-circle verified-badge"></i>
+                    </div>
+                    <p class="testimonial-text">Qualidade da luminária solar me surpreendeu. Entrega nota 10, chegou antes do prazo.</p>
+                </div>
+            </div>
+        </div>
+        <div class="slider-dots" id="slider-dots">
+            <span class="dot active" onclick="showTestimonial(0)"></span>
+            <span class="dot" onclick="showTestimonial(1)"></span>
+            <span class="dot" onclick="showTestimonial(2)"></span>
+        </div>
+    </section>
 
 <footer class="checkout-footer">
     <div class="footer-content">
@@ -1372,6 +1498,44 @@
         } finally {
             document.getElementById('loading-overlay').classList.remove('active');
         }
+    }
+
+    // ── TESTIMONIAL SLIDER ────────────────────────────────
+    let currentTestimonial = 0;
+    const testimonials = document.querySelectorAll('.testimonial-item');
+    const dots = document.querySelectorAll('.dot');
+
+    function showTestimonial(index) {
+        if (!testimonials.length) return;
+        testimonials.forEach(t => t.classList.remove('active'));
+        dots.forEach(d => d.classList.remove('active'));
+        
+        testimonials[index].classList.add('active');
+        dots[index].classList.add('active');
+        currentTestimonial = index;
+    }
+
+    // Auto-advance every 6 seconds
+    setInterval(() => {
+        let next = (currentTestimonial + 1) % testimonials.length;
+        showTestimonial(next);
+    }, 6000);
+
+    // Touch support (simple swipe)
+    let touchStartX = 0;
+    const tContainer = document.getElementById('testimonial-container');
+    if (tContainer) {
+        tContainer.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+        tContainer.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 50) {
+                showTestimonial((currentTestimonial + 1) % testimonials.length);
+            } else if (touchEndX > touchStartX + 50) {
+                showTestimonial((currentTestimonial - 1 + testimonials.length) % testimonials.length);
+            }
+        }, {passive: true});
     }
 </script>
 
