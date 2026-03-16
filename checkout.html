@@ -919,7 +919,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     let qty = parseInt(urlParams.get('qty') || '1');
-    const price = 8.00;
+    const price = parseFloat(urlParams.get('price') || '8.00'); // bundle total price for selected qty
     const light = urlParams.get('light') || 'warm';
     let selectedShippingPrice = 0;
     let selectedShippingName = 'Envio Regular (Grátis)';
@@ -928,7 +928,7 @@
     function fmt(n) { return 'R$ ' + n.toFixed(2).replace('.', ','); }
 
     function updateTotalDisplay() {
-        const sub = price * qty;
+        const sub = price;
         const total = sub + selectedShippingPrice;
         const shipTxt = selectedShippingPrice === 0 ? 'Grátis' : fmt(selectedShippingPrice);
 
@@ -1234,7 +1234,7 @@
         const status = document.getElementById('card-form-status');
         try {
             cardFormInstance = mp.cardForm({
-                amount: ((price * qty) + selectedShippingPrice).toString(),
+                amount: (price + selectedShippingPrice).toString(),
                 iframe: true,
                 form: {
                     id: 'form-checkout',
@@ -1288,7 +1288,7 @@
                                     },
                                     quantity: qty,
                                     lightColor: light,
-                                    totalPrice: (price * qty) + selectedShippingPrice,
+                                    totalPrice: price + selectedShippingPrice,
                                     paymentMethodId: data.paymentMethodId,
                                     token: data.token,
                                     installments: data.installments,
@@ -1349,7 +1349,7 @@
                     },
                     quantity: qty,
                     lightColor: light,
-                    totalPrice: ((price * qty) + selectedShippingPrice) * 0.95,
+                    totalPrice: (price + selectedShippingPrice) * 0.95,
                     paymentMethodId: 'pix',
                     shippingMethod: selectedShippingName,
                     shippingPrice: selectedShippingPrice,
