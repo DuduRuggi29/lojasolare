@@ -536,30 +536,19 @@
             margin-top: 28px;
         }
         .footer-content { max-width: 680px; margin: 0 auto; }
-        .payment-badges-central {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 22px;
+        .footer-payment-link {
+            margin-bottom: 20px;
         }
-        .badge-item {
-            background: white;
-            height: 30px;
-            min-width: 45px;
-            padding: 0 8px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .footer-payment-link a {
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            transition: color 0.2s;
         }
-        .badge-item img { 
-            max-height: 18px; 
-            max-width: 100%;
-            height: auto;
-            width: auto;
-            object-fit: contain;
+        .footer-payment-link a:hover {
+            color: #fff;
         }
         .footer-contact { margin-bottom: 14px; font-size: 13px; color: rgba(255,255,255,0.9); }
         .footer-contact a { color: #a8d5a2; text-decoration: none; font-weight: 600; }
@@ -1010,13 +999,9 @@
 
 <footer class="checkout-footer">
     <div class="footer-content">
-        <div class="payment-badges-central">
-            <div class="badge-item"><img src="https://logospng.org/download/pix/logo-pix-icone-512.png" alt="Pix"></div>
-            <div class="badge-item"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa"></div>
-            <div class="badge-item"><img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard"></div>
-            <div class="badge-item"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Elo_logo.svg" alt="Elo"></div>
-            <div class="badge-item"><img src="https://logodownload.org/wp-content/uploads/2019/06/mercado-pago-logo-1.png" alt="Mercado Pago"></div>
-        </div>
+        <p class="footer-payment-link">
+            <a href="formas-de-pagamento.html" target="_blank">Formas de Pagamento</a>
+        </p>
         <div class="footer-contact">
             <p><strong>Dúvidas?</strong> E-mail: <a href="mailto:contato@lojasolare.com.br">contato@lojasolare.com.br</a> | WhatsApp: <a href="https://wa.me/5521975605337" target="_blank">+55 21 97560-5337</a></p>
         </div>

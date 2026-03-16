@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formas de Pagamento — Solare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c4c3b;
+            margin-bottom: 30px;
+        }
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .badge-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            transition: transform 0.2s;
+        }
+        .badge-card:hover { transform: translateY(-3px); }
+        .badge-card img {
+            max-height: 40px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #2c4c3b;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px 24px;
+            border: 2px solid #2c4c3b;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .btn-back:hover {
+            background: #2c4c3b;
+            color: white;
+        }
+        @media (max-width: 400px) {
+            .badge-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Formas de Pagamento</h1>
+        
+        <div class="badge-grid">
+            <div class="badge-card">
+                <img src="https://logospng.org/download/pix/logo-pix-icone-1024.png" alt="Pix">
+            </div>
+            <div class="badge-card">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa">
+            </div>
+            <div class="badge-card">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard">
+            </div>
+            <div class="badge-card">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Elo_logo.svg" alt="Elo">
+            </div>
+            <div class="badge-card" style="grid-column: span 2;">
+                <img src="https://logodownload.org/wp-content/uploads/2019/06/mercado-pago-logo-1.png" alt="Mercado Pago" style="max-height: 30px;">
+            </div>
+        </div>
+
+        <a href="checkout.html" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            Voltar ao Checkout
+        </a>
+    </div>
+</body>
+</html>
