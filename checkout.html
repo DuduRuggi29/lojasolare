@@ -89,46 +89,80 @@
 
         /* ── OFFER BANNER ── */
         .offer-banner {
-            background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
-            border-radius: var(--radius);
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            position: relative;
+            background: linear-gradient(150deg, #054d38 0%, #043d2e 100%);
+            padding: 0;
             overflow: hidden;
+            position: relative;
         }
         .offer-banner::before {
             content: '';
             position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shine 3s infinite;
+            top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            animation: shine 5s ease-in-out infinite;
         }
         @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
+            0% { left: -60%; }
+            50% { left: 130%; }
+            100% { left: 130%; }
         }
-        .offer-title {
-            display: block;
-            font-size: 15px;
+        .offer-inner {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 13px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 9px;
+            text-align: center;
+        }
+        .offer-headline {
+            font-size: 13px;
             font-weight: 800;
             color: #fbbf24;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .offer-text {
-            display: block;
-            font-size: 13px;
-            line-height: 1.5;
-            color: rgba(255,255,255,0.95);
+        .offer-perks {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .offer-perk {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 8px;
+            padding: 7px 13px;
+        }
+        .perk-icon { font-size: 15px; color: #6ee86e; flex-shrink: 0; }
+        .perk-icon.ship { color: #93c5fd; }
+        .perk-icon.pix { color: #fbbf24; }
+        .offer-perk-text { font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.3; text-align: left; }
+        .offer-perk-text strong { display: block; font-size: 13px; font-weight: 700; color: #fff; }
+        .offer-urgency-row {
+            font-size: 12px;
+            color: rgba(255,255,255,0.75);
             font-weight: 500;
+            background: rgba(0,0,0,0.18);
+            border-radius: 20px;
+            padding: 4px 14px;
         }
-        .offer-text strong { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+        .offer-urgency-row i { color: #f97316; margin-right: 4px; }
+        .offer-urgency-row strong { color: #fca5a5; }
+        @media (max-width: 600px) {
+            .offer-inner { padding: 10px 14px; gap: 8px; }
+            .offer-headline { font-size: 11.5px; }
+            .offer-perk { padding: 6px 10px; gap: 6px; }
+            .offer-perk-text { font-size: 10.5px; }
+            .offer-perk-text strong { font-size: 12px; }
+            .offer-urgency-row { font-size: 11px; padding: 4px 10px; }
+        }
 
         /* ── STEP CARDS ── */
         .step-card {
@@ -140,7 +174,7 @@
             box-shadow: var(--shadow);
             transition: box-shadow 0.25s;
         }
-        .step-card.is-active { box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 0 0 2px rgba(44,76,59,0.12); }
+        .step-card.is-active { box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 2px rgba(44,76,59,0.18); border-color: rgba(44,76,59,0.18); }
 
         .step-header {
             padding: 15px 20px;
@@ -151,7 +185,7 @@
             border-bottom: 1px solid transparent;
             user-select: none;
         }
-        .step-header.active { border-bottom-color: var(--border); }
+        .step-header.active { border-bottom-color: var(--border); background: #f8fdf9; }
         .step-title {
             display: flex;
             align-items: center;
@@ -163,10 +197,24 @@
             text-transform: uppercase;
         }
         .step-number {
-            display: none;
+            display: inline-flex;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
+            background: #e2e8f0;
+            color: #94a3b8;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s, color 0.2s;
         }
+        .step-header.active .step-number { background: var(--primary); color: #fff; }
+        .step-header.locked .step-number { background: #e2e8f0; color: #94a3b8; }
+        .step-number.done { background: var(--accent) !important; color: #fff !important; }
         .step-header.locked { opacity: 0.45; }
-        .step-header.locked .step-number { background: #cbd5e1; }
 
         .step-content {
             padding: 20px;
@@ -639,6 +687,53 @@
             from { opacity: 0; transform: translateX(10px); }
             to { opacity: 1; transform: translateX(0); }
         }
+
+        /* ── GUARANTEE STRIP ── */
+        .guarantee-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 9px;
+            padding: 10px 14px;
+            margin-top: 14px;
+            font-size: 12px;
+            color: #166534;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .guarantee-strip i { color: var(--accent); font-size: 15px; flex-shrink: 0; }
+
+        /* ── PAYMENT SECURITY NOTE ── */
+        .payment-security-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .payment-security-note i { color: var(--accent); }
+
+        /* ── STEP HEADER ICON ── */
+        .step-header-icon {
+            color: var(--primary);
+            font-size: 13px;
+            opacity: 0.7;
+        }
+        .step-header.locked .step-header-icon { opacity: 0.35; }
+
+        /* ── OFFER BANNER mobile fix ── */
+        @media (max-width: 420px) {
+            .offer-perks { gap: 5px; }
+            .offer-perk { padding: 5px 8px; gap: 5px; }
+        }
     </style>
 </head>
 <body>
@@ -655,8 +750,26 @@
 
 <!-- OFFER BANNER -->
 <section class="offer-banner">
-    <span class="offer-title">✨ Parabéns! Você ganhou: 90 Dias de Garantia + 5% de Desconto no Pix!</span>
-    <span class="offer-text">Aproveite: Hoje é o <strong>último dia</strong> com Frete Grátis disponível para a sua região. 🚚</span>
+    <div class="offer-inner">
+        <span class="offer-headline">🎉 Parabéns! Você garantiu benefícios exclusivos</span>
+        <div class="offer-perks">
+            <div class="offer-perk">
+                <span class="perk-icon"><i class="fas fa-shield-alt"></i></span>
+                <div class="offer-perk-text"><span>Garantia</span><strong>90 Dias</strong></div>
+            </div>
+            <div class="offer-perk">
+                <span class="perk-icon ship"><i class="fas fa-truck"></i></span>
+                <div class="offer-perk-text"><span>Envio</span><strong>Grátis</strong></div>
+            </div>
+            <div class="offer-perk">
+                <span class="perk-icon pix"><i class="fas fa-bolt"></i></span>
+                <div class="offer-perk-text"><span>Desconto Pix</span><strong>5% OFF</strong></div>
+            </div>
+        </div>
+        <div class="offer-urgency-row">
+            <i class="fas fa-fire-alt"></i> Último dia com <strong>Frete Grátis</strong> para a sua região
+        </div>
+    </div>
 </section>
 
 <main class="checkout-main">
@@ -668,6 +781,7 @@
             <div class="step-header active" id="head-1">
                 <div class="step-title">
                     <span class="step-number" id="snum-1">1</span>
+                    <i class="fas fa-user step-header-icon"></i>
                     Informações Pessoais
                 </div>
             </div>
@@ -715,6 +829,7 @@
             <div class="step-header locked" id="head-2">
                 <div class="step-title">
                     <span class="step-number" id="snum-2">2</span>
+                    <i class="fas fa-map-marker-alt step-header-icon"></i>
                     Endereço de Entrega
                 </div>
             </div>
@@ -783,6 +898,7 @@
             <div class="step-header locked" id="head-3">
                 <div class="step-title">
                     <span class="step-number" id="snum-3">3</span>
+                    <i class="fas fa-truck step-header-icon"></i>
                     Opção de Frete
                 </div>
             </div>
@@ -829,6 +945,7 @@
             <div class="step-header locked" id="head-4">
                 <div class="step-title">
                     <span class="step-number" id="snum-4">4</span>
+                    <i class="fas fa-lock step-header-icon"></i>
                     Pagamento
                 </div>
             </div>
@@ -866,6 +983,7 @@
                         <i class="fas fa-qrcode"></i>
                         <span>GERAR CÓDIGO PIX</span>
                     </button>
+                    <p class="payment-security-note"><i class="fas fa-lock"></i> Pagamento 100% seguro · Dados criptografados</p>
                 </div>
 
                 <div id="card-payment-form">
@@ -915,7 +1033,7 @@
                 <div class="trust-row">
                     <div class="trust-item"><i class="fas fa-shield-alt"></i> SSL 256-bit</div>
                     <div class="trust-item"><i class="fas fa-lock"></i> Mercado Pago</div>
-                    <div class="trust-item"><i class="fas fa-undo"></i> Compra garantida</div>
+                    <div class="trust-item"><i class="fas fa-undo"></i> 90 dias garantia</div>
                 </div>
             </div>
         </div>
@@ -950,6 +1068,10 @@
                     <span><i class="fas fa-bolt" style="color:#f97316;margin-right:4px;"></i>Com Pix (5% off):</span>
                     <span id="sum-pix-total">R$ 7,60</span>
                 </div>
+            </div>
+            <div class="guarantee-strip">
+                <i class="fas fa-shield-alt"></i>
+                <span>Compra 100% protegida · Garantia de 90 dias</span>
             </div>
         </div>
     </aside>
