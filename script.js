@@ -352,6 +352,12 @@ function initCardStack() {
 }
 
 // Advanced Reviews Logic
+function showClienteAviso() {
+    const aviso = document.getElementById('aviso-cliente');
+    if (!aviso) return;
+    aviso.style.display = aviso.style.display === 'none' ? 'block' : 'none';
+}
+
 function toggleReviewModal() {
     const modal = document.getElementById('review-modal');
     modal.classList.toggle('active');
