@@ -538,6 +538,45 @@
             padding: 5px 8px;
         }
 
+        /* ── QTY CONTROL (order summary) ── */
+        .qty-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 0 0 14px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1.5px solid var(--border);
+            border-radius: 50%;
+            background: white;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: 700;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            flex-shrink: 0;
+        }
+        .qty-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .qty-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .qty-btn:disabled:hover { background: white; color: var(--primary); border-color: var(--border); }
+        .qty-display {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            min-width: 28px;
+            text-align: center;
+        }
+
         /* ── FOOTER ── */
         .checkout-footer {
             background: var(--primary);
@@ -586,11 +625,16 @@
             <div class="progress-connector" id="pcon-1"></div>
             <div class="progress-step" id="prog-2">
                 <div class="p-dot" id="pdot-2">2</div>
-                <span class="p-label">Entrega</span>
+                <span class="p-label">Endereço</span>
             </div>
             <div class="progress-connector" id="pcon-2"></div>
             <div class="progress-step" id="prog-3">
                 <div class="p-dot" id="pdot-3">3</div>
+                <span class="p-label">Frete</span>
+            </div>
+            <div class="progress-connector" id="pcon-3"></div>
+            <div class="progress-step" id="prog-4">
+                <div class="p-dot" id="pdot-4">4</div>
                 <span class="p-label">Pagamento</span>
             </div>
         </div>
@@ -695,30 +739,8 @@
                         <input type="text" id="addr-state" placeholder="RJ" maxlength="2" style="text-transform:uppercase">
                         <span class="field-error" id="err-state">UF inválida.</span>
                     </div>
-                    <div class="shipping-options">
-                        <div class="shipping-option selected" onclick="selectShipping('regular', 0, 'Envio Regular (Grátis)')">
-                            <div class="shipping-info">
-                                <div class="radio-circle"><div class="radio-inner"></div></div>
-                                <div>
-                                    <span class="shipping-text">Envio Regular</span>
-                                    <span class="shipping-eta">4 a 8 dias úteis</span>
-                                </div>
-                            </div>
-                            <span class="shipping-price" style="color:var(--accent)">Grátis</span>
-                        </div>
-                        <div class="shipping-option" onclick="selectShipping('express', 19.90, 'Envio Expresso (24h)')">
-                            <div class="shipping-info">
-                                <div class="radio-circle"><div class="radio-inner"></div></div>
-                                <div>
-                                    <span class="shipping-text">Envio Expresso</span>
-                                    <span class="shipping-eta">Até 24 horas</span>
-                                </div>
-                            </div>
-                            <span class="shipping-price">R$ 19,90</span>
-                        </div>
-                    </div>
                     <button class="btn-continue" onclick="nextStep(2)">
-                        <span>Confirmar Entrega</span>
+                        <span>Confirmar Endereço</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
@@ -726,21 +748,67 @@
             <div class="step-summary" id="sum-2">
                 <div class="step-summary-text">
                     <strong id="txt-sum-addr-2">—</strong>
-                    <span id="txt-sum-ship-2">—</span>
+                    <span id="txt-sum-cep-2">—</span>
                 </div>
                 <button class="btn-edit" onclick="editStep(2)">Editar</button>
             </div>
         </div>
 
-        <!-- STEP 3: PAGAMENTO -->
+        <!-- STEP 3: FRETE -->
         <div class="step-card" id="step-3">
             <div class="step-header locked" id="head-3">
                 <div class="step-title">
                     <span class="step-number" id="snum-3">3</span>
-                    Pagamento
+                    Opção de Frete
                 </div>
             </div>
             <div class="step-content" id="content-3">
+                <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Escolha como deseja receber seu pedido:</p>
+                <div class="shipping-options">
+                    <div class="shipping-option selected" onclick="selectShipping('regular', 0, 'Envio Regular (Grátis)')">
+                        <div class="shipping-info">
+                            <div class="radio-circle"><div class="radio-inner"></div></div>
+                            <div>
+                                <span class="shipping-text">Envio Regular</span>
+                                <span class="shipping-eta">4 a 8 dias úteis</span>
+                            </div>
+                        </div>
+                        <span class="shipping-price" style="color:var(--accent)">Grátis</span>
+                    </div>
+                    <div class="shipping-option" onclick="selectShipping('express', 19.90, 'Envio Expresso (24h)')">
+                        <div class="shipping-info">
+                            <div class="radio-circle"><div class="radio-inner"></div></div>
+                            <div>
+                                <span class="shipping-text">Envio Expresso</span>
+                                <span class="shipping-eta">Até 24 horas</span>
+                            </div>
+                        </div>
+                        <span class="shipping-price">R$ 19,90</span>
+                    </div>
+                </div>
+                <button class="btn-continue" onclick="nextStep(3)">
+                    <span>Confirmar Frete</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            <div class="step-summary" id="sum-3">
+                <div class="step-summary-text">
+                    <strong id="txt-sum-ship-3">Envio Regular (Grátis)</strong>
+                    <span id="txt-sum-eta-3">4 a 8 dias úteis</span>
+                </div>
+                <button class="btn-edit" onclick="editStep(3)">Editar</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: PAGAMENTO -->
+        <div class="step-card" id="step-4">
+            <div class="step-header locked" id="head-4">
+                <div class="step-title">
+                    <span class="step-number" id="snum-4">4</span>
+                    Pagamento
+                </div>
+            </div>
+            <div class="step-content" id="content-4">
                 <div class="payment-tabs">
                     <button class="tab-btn active" id="tab-pix" onclick="setPaymentType('pix')">
                         <img src="https://logopng.com.br/logos/pix-106.png" height="15" alt="Pix"> Pix
@@ -834,6 +902,11 @@
     <aside class="order-summary">
         <div class="summary-card">
             <div class="summary-card-title">Resumo do Pedido</div>
+            <div class="qty-control">
+                <button class="qty-btn" id="qty-btn-minus" onclick="changeQty(-1)">−</button>
+                <span class="qty-display" id="qty-display">1</span>
+                <button class="qty-btn" id="qty-btn-plus" onclick="changeQty(1)">+</button>
+            </div>
             <div class="product-line">
                 <img id="sum-img" src="luminaria-warm.png" alt="Luminária Solare">
                 <div class="product-info">
@@ -886,9 +959,10 @@
     const mp = new MercadoPago('APP_USR-99761fc8-3427-45b4-afa9-610b72f57f5b');
     let paymentType = 'pix';
     let cardFormBound = false;
+    let cardFormInstance = null;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const qty = urlParams.get('qty') || '1';
+    let qty = parseInt(urlParams.get('qty') || '1');
     const price = 8.00;
     const light = urlParams.get('light') || 'warm';
     let selectedShippingPrice = 0;
@@ -898,9 +972,20 @@
     function fmt(n) { return 'R$ ' + n.toFixed(2).replace('.', ','); }
 
     function updateTotalDisplay() {
-        const sub = price * parseInt(qty);
+        const sub = price * qty;
         const total = sub + selectedShippingPrice;
         const shipTxt = selectedShippingPrice === 0 ? 'Grátis' : fmt(selectedShippingPrice);
+
+        // Qty buttons state
+        const btnMinus = document.getElementById('qty-btn-minus');
+        const btnPlus = document.getElementById('qty-btn-plus');
+        const qtyEl = document.getElementById('qty-display');
+        if (qtyEl) qtyEl.textContent = qty;
+        if (btnMinus) btnMinus.disabled = qty <= 1;
+        if (btnPlus) btnPlus.disabled = qty >= 10;
+
+        // Variant label
+        document.getElementById('sum-variant').textContent = `${qty} unid. — ${light === 'warm' ? 'Luz Quente' : 'Luz Branca'}`;
 
         // Sidebar summary
         document.getElementById('sum-subtotal').textContent = fmt(sub);
@@ -908,7 +993,7 @@
         document.getElementById('sum-total').textContent = fmt(total);
         document.getElementById('sum-pix-total').textContent = fmt(total * 0.95);
 
-        // Step-3 mini summary
+        // Step-4 mini summary
         const paySub = document.getElementById('pay-sub');
         const payShip = document.getElementById('pay-ship');
         const payTotal = document.getElementById('pay-total');
@@ -919,9 +1004,15 @@
         if (payPix) payPix.textContent = fmt(total * 0.95);
     }
 
+    function changeQty(delta) {
+        const newQty = qty + delta;
+        if (newQty < 1 || newQty > 10) return;
+        qty = newQty;
+        updateTotalDisplay();
+    }
+
     updateTotalDisplay();
     document.getElementById('sum-img').src = light === 'warm' ? 'luminaria-warm.png' : 'luminaria-white.png';
-    document.getElementById('sum-variant').textContent = `${qty} unid. — ${light === 'warm' ? 'Luz Quente' : 'Luz Branca'}`;
 
     // ── INPUT MASKS ───────────────────────────────────────
     document.getElementById('cust-cpf').addEventListener('input', function() {
@@ -993,8 +1084,6 @@
             if (errMap[id]) document.getElementById(errMap[id])?.classList.remove('show');
         });
     });
-
-    // CEP lookup is handled inside the 'input' listener above (revealAddrFields + fetch)
 
     // ── SHIPPING ──────────────────────────────────────────
     function selectShipping(type, cost, name) {
@@ -1071,7 +1160,7 @@
         if (dot) { dot.innerHTML = '<i class="fas fa-check" style="font-size:10px;"></i>'; }
         document.getElementById(`prog-${n}`)?.classList.replace('active','done') ||
         document.getElementById(`prog-${n}`)?.classList.add('done');
-        if (n < 3) document.getElementById(`pcon-${n}`)?.classList.add('done');
+        if (n < 4) document.getElementById(`pcon-${n}`)?.classList.add('done');
     }
     function setProgActive(n) {
         const prog = document.getElementById(`prog-${n}`);
@@ -1084,11 +1173,11 @@
         if (prog) { prog.classList.remove('done','active'); }
         const dot = document.getElementById(`pdot-${n}`);
         if (dot) dot.textContent = n;
-        if (n <= 3) document.getElementById(`pcon-${n-1}`)?.classList.remove('done');
+        if (n <= 4) document.getElementById(`pcon-${n-1}`)?.classList.remove('done');
     }
 
     function nextStep(n) {
-        const valid = n === 1 ? validateStep1() : validateStep2();
+        const valid = n === 1 ? validateStep1() : n === 2 ? validateStep2() : true;
         if (!valid) return;
 
         if (n === 1) {
@@ -1099,8 +1188,12 @@
             const street = document.getElementById('addr-street').value;
             const num = document.getElementById('addr-num').value;
             const city = document.getElementById('addr-city').value;
+            const cep = document.getElementById('addr-cep').value;
             document.getElementById('txt-sum-addr-2').textContent = `${street}, ${num} — ${city}`;
-            document.getElementById('txt-sum-ship-2').textContent = selectedShippingName;
+            document.getElementById('txt-sum-cep-2').textContent = `CEP: ${cep}`;
+        } else if (n === 3) {
+            document.getElementById('txt-sum-ship-3').textContent = selectedShippingName;
+            document.getElementById('txt-sum-eta-3').textContent = selectedShippingPrice === 0 ? '4 a 8 dias úteis' : 'Até 24 horas';
         }
 
         // Mark step n done
@@ -1114,13 +1207,13 @@
 
         // Open next step
         const next = n + 1;
-        if (next <= 3) {
+        if (next <= 4) {
             document.getElementById(`content-${next}`).classList.add('active');
             document.getElementById(`head-${next}`).classList.add('active');
             document.getElementById(`head-${next}`).classList.remove('locked');
             document.getElementById(`step-${next}`).classList.add('is-active');
             setProgActive(next);
-            if (next === 3) syncFields();
+            if (next === 4) syncFields();
             setTimeout(() => {
                 document.getElementById(`step-${next}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 60);
@@ -1150,7 +1243,7 @@
         setProgActive(n);
 
         // Lock and reset steps after n
-        for (let i = n + 1; i <= 3; i++) {
+        for (let i = n + 1; i <= 4; i++) {
             document.getElementById(`head-${i}`)?.classList.add('locked');
             document.getElementById(`head-${i}`)?.classList.remove('active');
             const s = document.getElementById(`snum-${i}`);
@@ -1179,27 +1272,28 @@
         if (type === 'card') {
             syncFields();
             if (!cardFormBound) {
-                // Wait 2 animation frames so the browser paints the visible containers
-                // before the MP SDK tries to measure them and inject iframes
                 requestAnimationFrame(() => requestAnimationFrame(() => initCardForm()));
             }
         }
     }
 
     function syncFields() {
-        // NOT syncing cardholderName — user fills it manually (may use another person's card)
         document.getElementById('form-checkout__identificationNumber').value = document.getElementById('cust-cpf').value.replace(/\D/g, '');
         document.getElementById('form-checkout__cardholderEmail').value = document.getElementById('cust-email').value;
     }
 
     // ── CARD FORM (MP SDK) ────────────────────────────────
-    let cardFormInstance = null;
     function initCardForm() {
         if (cardFormBound) return;
+        // Cleanup any previous failed instance before retrying
+        if (cardFormInstance) {
+            try { cardFormInstance.unmount(); } catch(e) {}
+            cardFormInstance = null;
+        }
         const status = document.getElementById('card-form-status');
         try {
             cardFormInstance = mp.cardForm({
-                amount: ((price * parseInt(qty)) + selectedShippingPrice).toString(),
+                amount: ((price * qty) + selectedShippingPrice).toString(),
                 iframe: true,
                 form: {
                     id: 'form-checkout',
@@ -1216,7 +1310,8 @@
                 callbacks: {
                     onFormMounted: error => {
                         if (error) {
-                            status.innerHTML = `<span style="color:var(--danger);cursor:pointer;font-size:12px;" onclick="window.location.reload()"><i class="fas fa-exclamation-triangle"></i> Erro ao carregar. Toque para recarregar.</span>`;
+                            console.error('Card form mount error:', error);
+                            status.innerHTML = `<span style="color:var(--danger);cursor:pointer;font-size:12px;" onclick="cardFormBound=false;initCardForm()"><i class="fas fa-exclamation-triangle"></i> Erro ao carregar campos. Toque para tentar novamente.</span>`;
                         } else {
                             status.innerHTML = `<span style="color:var(--accent);font-size:12px;"><i class="fas fa-check-circle"></i> Pagamento seguro ativado</span>`;
                             cardFormBound = true;
@@ -1228,8 +1323,10 @@
                             alert('Verifique os dados dos passos anteriores.');
                             return;
                         }
+                        syncFields();
                         const data = cardFormInstance.getCardFormData();
-                        if (!data.token) { alert('Verifique os dados do cartão.'); return; }
+                        if (!data.token) { alert('Verifique os dados do cartão e tente novamente.'); return; }
+                        if (!data.paymentMethodId) { alert('Bandeira do cartão não reconhecida. Verifique o número.'); return; }
                         document.getElementById('loading-overlay').classList.add('active');
                         try {
                             const res = await fetch('/api/process-payment', {
@@ -1237,8 +1334,8 @@
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     customerName: document.getElementById('cust-name').value,
-                                    customerEmail: data.cardholderEmail,
-                                    customerCpf: data.identificationNumber,
+                                    customerEmail: document.getElementById('cust-email').value,
+                                    customerCpf: document.getElementById('cust-cpf').value,
                                     customerPhone: document.getElementById('cust-phone').value,
                                     customerAddress: {
                                         cep: document.getElementById('addr-cep').value,
@@ -1250,7 +1347,7 @@
                                     },
                                     quantity: qty,
                                     lightColor: light,
-                                    totalPrice: (price * parseInt(qty)) + selectedShippingPrice,
+                                    totalPrice: (price * qty) + selectedShippingPrice,
                                     paymentMethodId: data.paymentMethodId,
                                     token: data.token,
                                     installments: data.installments,
@@ -1260,13 +1357,22 @@
                                 })
                             });
                             const result = await res.json();
-                            if (result.status === 'approved') {
+                            if (!res.ok) {
+                                const reason = result.details?.cause?.[0]?.description || result.details?.message || result.error || 'Erro desconhecido';
+                                console.error('Card payment error:', result);
+                                alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
+                            } else if (result.status === 'approved') {
                                 window.location.href = `/obrigado.html?id=${result.id}&type=card`;
+                            } else if (result.status === 'in_process' || result.status === 'pending') {
+                                window.location.href = `/obrigado.html?id=${result.id}&type=card&status=${result.status}`;
                             } else {
-                                alert('Pagamento recusado. Verifique os dados ou o limite do cartão.');
+                                const reason = result.status_detail || 'Verifique os dados ou o limite do cartão.';
+                                console.error('Card payment declined:', result);
+                                alert(`Pagamento recusado: ${reason}`);
                             }
                         } catch (e) {
-                            alert('Erro no servidor. Tente novamente.');
+                            console.error('Card payment fetch error:', e);
+                            alert('Erro de conexão. Verifique sua internet e tente novamente.');
                         } finally {
                             document.getElementById('loading-overlay').classList.remove('active');
                         }
@@ -1274,7 +1380,8 @@
                 }
             });
         } catch (e) {
-            document.getElementById('card-form-status').innerHTML = `<span style="color:var(--danger);font-size:12px;">Erro ao carregar. Recarregue a página.</span>`;
+            console.error('Card form init error:', e);
+            document.getElementById('card-form-status').innerHTML = `<span style="color:var(--danger);font-size:12px;cursor:pointer;" onclick="cardFormBound=false;initCardForm()">Erro ao carregar campos. Toque para tentar novamente.</span>`;
         }
     }
 
@@ -1301,7 +1408,7 @@
                     },
                     quantity: qty,
                     lightColor: light,
-                    totalPrice: ((price * parseInt(qty)) + selectedShippingPrice) * 0.95,
+                    totalPrice: ((price * qty) + selectedShippingPrice) * 0.95,
                     paymentMethodId: 'pix',
                     shippingMethod: selectedShippingName,
                     shippingPrice: selectedShippingPrice,
@@ -1309,9 +1416,8 @@
             });
             const result = await res.json();
             if (res.ok && result.qr_code) {
-                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64)}`;
+                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
             } else {
-                // Extract actual MP error reason for diagnosis
                 const mpCause = result.details?.cause?.[0]?.description
                     || result.details?.message
                     || result.error

@@ -104,8 +104,8 @@ export default async function handler(req, res) {
     };
 
     if (isPix) {
-      orderData.pix_qr_code = mpResult.point_of_interaction.transaction_data.qr_code;
-      orderData.pix_qr_code_base64 = mpResult.point_of_interaction.transaction_data.qr_code_base64;
+      orderData.pix_qr_code = mpResult.point_of_interaction?.transaction_data?.qr_code ?? null;
+      orderData.pix_qr_code_base64 = mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null;
     }
 
     const { data: order, error: dbError } = await supabase
@@ -120,11 +120,14 @@ export default async function handler(req, res) {
 
     // Schedule Pix reminder email 2 minutes after generation (if not paid, user gets a nudge)
     if (isPix) {
-      schedulePixReminder({
-        customerName,
-        customerEmail,
-        pixCode: mpResult.point_of_interaction.transaction_data.qr_code,
-      }).catch(e => console.error('Pix reminder schedule failed (non-fatal):', e));
+      const pixQrCode = mpResult.point_of_interaction?.transaction_data?.qr_code;
+      if (pixQrCode) {
+        schedulePixReminder({
+          customerName,
+          customerEmail,
+          pixCode: pixQrCode,
+        }).catch(e => console.error('Pix reminder schedule failed (non-fatal):', e));
+      }
     }
 
     // For card payments approved immediately, notify and save card for 1-click upsell
@@ -179,8 +182,8 @@ export default async function handler(req, res) {
       status_detail: mpResult.status_detail,
       id: mpResult.id,
       orderId: order?.id || null,
-      qr_code: isPix ? mpResult.point_of_interaction.transaction_data.qr_code : null,
-      qr_code_base64: isPix ? mpResult.point_of_interaction.transaction_data.qr_code_base64 : null,
+      qr_code: isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code ?? null) : null,
+      qr_code_base64: isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null) : null,
     });
 
   } catch (err) {
