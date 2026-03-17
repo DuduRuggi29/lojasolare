@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCardStack();
 });
 
-// CardStack Implementation - Vanilla JS version of the card-stack effect
+// CardStack Implementation - lightweight fade carousel
 function initCardStack() {
     const stack = document.getElementById('benefit-card-stack');
     const items = document.querySelectorAll('.card-stack-item');
@@ -264,94 +264,31 @@ function initCardStack() {
 
     let currentIndex = 0;
     const total = items.length;
-    
-    // Config mirroring the React component
-    const spreadDeg = 48;
-    const depthPx = 140;
-    const activeLiftPx = 22;
-    const maxVisibleOffset = 3;
 
     function updateStack() {
         items.forEach((item, i) => {
-            // Find minimal signed offset with wrapping
-            let off = i - currentIndex;
-            
-            // Loop adjustment
-            if (off > total / 2) off -= total;
-            if (off < -total / 2) off += total;
-
-            const absOff = Math.abs(off);
-            const visible = absOff <= maxVisibleOffset;
-
-            if (!visible) {
-                item.style.opacity = '0';
-                item.style.pointerEvents = 'none';
-                return;
-            }
-
-            // Geometry calculations
-            const rotateZ = off * (spreadDeg / maxVisibleOffset);
-            const x = off * (window.innerWidth < 768 ? 40 : 60); // dynamic spacing
-            const z = -absOff * depthPx;
-            const scale = off === 0 ? 1 : 0.92;
-            const y = off === 0 ? 0 : absOff * 15;
-            const rotateX = off === 0 ? 0 : 8;
-
-            item.style.opacity = visible ? (1 - absOff * 0.2) : '0';
-            item.style.zIndex = 100 - absOff;
-            item.style.transform = `translateX(calc(-50% + ${x}px)) translateY(${y}px) translateZ(${z}px) rotateZ(${rotateZ}deg) rotateX(${rotateX}deg) scale(${scale})`;
-            item.style.left = '50%'; // Force centering
-            item.style.pointerEvents = off === 0 ? 'auto' : 'none';
-
-            item.classList.toggle('active', off === 0);
+            item.classList.toggle('active', i === currentIndex);
         });
-
         dots.forEach((dot, i) => {
             dot.classList.toggle('active', i === currentIndex);
         });
     }
 
-    function next() {
-        currentIndex = (currentIndex + 1) % total;
-        updateStack();
-    }
+    function next() { currentIndex = (currentIndex + 1) % total; updateStack(); }
+    function prev() { currentIndex = (currentIndex - 1 + total) % total; updateStack(); }
 
-    function prev() {
-        currentIndex = (currentIndex - 1 + total) % total;
-        updateStack();
-    }
-
-    // Interaction Listeners
-    stack.addEventListener('click', (e) => {
-        const item = e.target.closest('.card-stack-item');
-        if (item) {
-            const index = parseInt(item.getAttribute('data-index'));
-            if (index === currentIndex) {
-                // If clicking active card, go next
-                next();
-            } else {
-                currentIndex = index;
-                updateStack();
-            }
-        }
-    });
+    stack.addEventListener('click', next);
 
     dots.forEach((dot, i) => {
-        dot.addEventListener('click', () => {
-            currentIndex = i;
-            updateStack();
-        });
+        dot.addEventListener('click', () => { currentIndex = i; updateStack(); });
     });
 
-    // Simple Swipe Support
+    // Swipe support
     let startX = 0;
-    stack.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+    stack.addEventListener('touchstart', e => startX = e.touches[0].clientX, { passive: true });
     stack.addEventListener('touchend', e => {
         const diff = startX - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 50) {
-            if (diff > 0) next();
-            else prev();
-        }
+        if (Math.abs(diff) > 50) { if (diff > 0) next(); else prev(); }
     });
 
     // Auto Advance
