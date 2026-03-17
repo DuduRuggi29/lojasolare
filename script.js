@@ -52,9 +52,9 @@ function selectVariant(element, type) {
 
 // Current globally selected price for dropdown use
 // Defaults match the active card on page load (2 unidades)
-let currentSelectedPrice = 89.90;
+let currentSelectedPrice = 78.90;
 let currentSelectedQty = 2;
-let currentSelectedOldPrice = 159.90;
+let currentSelectedOldPrice = 129.90;
 let currentSelectedLight = 'warm';
 
 // Wire "Comprar Agora" button to checkout page
