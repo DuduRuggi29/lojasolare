@@ -150,8 +150,30 @@ header {
     height: 48px;
 }
 
-.header-spacer {
-    width: 48px; /* Match menu-toggle width */
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.header-icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.15rem;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background 0.15s;
+}
+
+.header-icon-btn:hover {
+    background: rgba(0,0,0,0.05);
 }
 
 nav {

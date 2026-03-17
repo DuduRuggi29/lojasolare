@@ -84,7 +84,14 @@
                     <p><i class="far fa-envelope"></i> contato@lojasolare.com.br</p>
                 </div>
             </nav>
-            <div class="header-spacer"></div>
+            <div class="header-icons">
+                <button class="header-icon-btn" aria-label="Pesquisar" onclick="document.querySelector('#home').scrollIntoView({behavior:'smooth'})">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="header-icon-btn" aria-label="Carrinho" onclick="document.querySelector('.btn-checkout').scrollIntoView({behavior:'smooth'})">
+                    <i class="fas fa-shopping-bag"></i>
+                </button>
+            </div>
         </div>
     </header>
 
