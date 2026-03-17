@@ -175,29 +175,29 @@
                         <div class="option-group">
                             <label>Quantidade:</label>
                             <div class="quantity-grid">
-                                <div class="qty-card" onclick="updatePricing(1, 8.00, 15.00, this)">
+                                <div class="qty-card" onclick="updatePricing(1, 8.00, 15.00, this)" data-qty="1" data-price="8.00" data-old-price="15.00">
                                     <span class="qty-num">1 UNID.</span>
                                     <span class="qty-price">R$ 8,00</span>
                                 </div>
-                                <div class="qty-card active" onclick="updatePricing(2, 89.90, 159.90, this)">
+                                <div class="qty-card active" onclick="updatePricing(2, 89.90, 159.90, this)" data-qty="2" data-price="89.90" data-old-price="159.90">
                                     <span class="badge-qty">ECONOMIZE 10%</span>
                                     <span class="qty-num">2 UNID.</span>
                                     <span class="qty-price">R$ 89,90</span>
                                 </div>
-                                <div class="qty-card" onclick="updatePricing(4, 159.90, 279.90, this)">
+                                <div class="qty-card" onclick="updatePricing(4, 159.90, 279.90, this)" data-qty="4" data-price="159.90" data-old-price="279.90">
                                     <span class="badge-qty">MAIS POPULAR</span>
                                     <span class="qty-num">4 UNID.</span>
                                     <span class="qty-price">R$ 159,90</span>
                                 </div>
-                                <div class="qty-card" onclick="updatePricing(6, 219.90, 399.90, this)">
+                                <div class="qty-card" onclick="updatePricing(6, 219.90, 399.90, this)" data-qty="6" data-price="219.90" data-old-price="399.90">
                                     <span class="qty-num">6 UNID.</span>
                                     <span class="qty-price">R$ 219,90</span>
                                 </div>
-                                <div class="qty-card" onclick="updatePricing(8, 279.90, 499.90, this)">
+                                <div class="qty-card" onclick="updatePricing(8, 279.90, 499.90, this)" data-qty="8" data-price="279.90" data-old-price="499.90">
                                     <span class="qty-num">8 UNID.</span>
                                     <span class="qty-price">R$ 279,90</span>
                                 </div>
-                                <div class="qty-card" onclick="updatePricing(10, 319.90, 599.90, this)">
+                                <div class="qty-card" onclick="updatePricing(10, 319.90, 599.90, this)" data-qty="10" data-price="319.90" data-old-price="599.90">
                                     <span class="badge-qty">MELHOR VALOR</span>
                                     <span class="qty-num">10 UNID.</span>
                                     <span class="qty-price">R$ 319,90</span>
@@ -236,7 +236,7 @@
                                 </div>
                             </div>
                             
-                            <button class="btn-checkout">COMPRAR AGORA</button>
+                            <button class="btn-checkout" onclick="handleCheckout()">COMPRAR AGORA</button>
                             <div class="secure-checkout">
                                 <span>🔒 Pagamento 100% Seguro</span>
                             </div>
@@ -773,6 +773,6 @@
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" defer></script>
-    <script src="script.js?v=1.6" defer></script>
+    <script src="script.js?v=1.8" defer></script>
 </body>
 </html>

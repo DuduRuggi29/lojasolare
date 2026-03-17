@@ -58,30 +58,40 @@ let currentSelectedOldPrice = 159.90;
 let currentSelectedLight = 'warm';
 
 // Wire "Comprar Agora" button to checkout page
-document.addEventListener('DOMContentLoaded', () => {
-    const checkoutBtn = document.querySelector('.btn-checkout');
-    if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', () => {
-            if (typeof fbq !== 'undefined') {
-                fbq('track', 'AddToCart', {
-                    content_name: 'Luminária Solar Solare',
-                    content_ids: ['solare-luminaria'],
-                    content_type: 'product',
-                    value: currentSelectedPrice,
-                    currency: 'BRL',
-                    num_items: currentSelectedQty,
-                });
-            }
-            const params = new URLSearchParams({
-                qty: currentSelectedQty,
-                price: currentSelectedPrice,
-                oldPrice: currentSelectedOldPrice,
-                light: currentSelectedLight,
-            });
-            window.location.href = `checkout.html?${params.toString()}`;
+// Reads directly from the active DOM elements to avoid stale state
+window.handleCheckout = function() {
+    // Read qty/price from active card data attributes (source of truth)
+    const activeCard = document.querySelector('.qty-card.active');
+    if (activeCard && activeCard.dataset.qty) {
+        currentSelectedQty   = parseInt(activeCard.dataset.qty);
+        currentSelectedPrice = parseFloat(activeCard.dataset.price);
+        currentSelectedOldPrice = parseFloat(activeCard.dataset.oldPrice);
+    }
+
+    // Read light from active variant button
+    const activeLight = document.querySelector('.variant-btn.active[data-value]');
+    if (activeLight) {
+        currentSelectedLight = activeLight.getAttribute('data-value');
+    }
+
+    if (typeof fbq !== 'undefined') {
+        fbq('track', 'AddToCart', {
+            content_name: 'Luminária Solar Solare',
+            content_ids: ['solare-luminaria'],
+            content_type: 'product',
+            value: currentSelectedPrice,
+            currency: 'BRL',
+            num_items: currentSelectedQty,
         });
     }
-});
+    const params = new URLSearchParams({
+        qty: currentSelectedQty,
+        price: currentSelectedPrice,
+        oldPrice: currentSelectedOldPrice,
+        light: currentSelectedLight,
+    });
+    window.location.href = `checkout.html?${params.toString()}`;
+};
 
 // Quantity and Price Logic
 window.updatePricing = function(qty, price, oldPrice, element) {
