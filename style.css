@@ -157,19 +157,19 @@ header {
 }
 
 .header-icon-btn {
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    padding: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    line-height: 0;
+    background: none !important;
+    border: none !important;
+    color: var(--primary-color) !important;
+    cursor: pointer !important;
+    padding: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+    line-height: 0 !important;
 }
 
 .header-icon-btn:hover {
@@ -177,9 +177,10 @@ header {
 }
 
 .header-icon-btn svg {
-    display: block;
-    color: var(--primary-color);
-    transition: transform 0.2s ease;
+    display: block !important;
+    color: var(--primary-color) !important;
+    stroke: var(--primary-color) !important;
+    transition: transform 0.2s ease !important;
 }
 
 .header-icon-btn:hover svg {
