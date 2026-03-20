@@ -13,8 +13,8 @@ export default async function handler(req, res) {
   const { payment_id } = req.query;
   if (!payment_id) return res.status(400).json({ error: 'Missing payment_id' });
 
-  // payment_id deve ser numérico (IDs do MP são sempre inteiros)
-  if (!/^\d{1,20}$/.test(String(payment_id))) {
+  // Allow numeric IDs (legacy) and PagBank alphanumeric IDs like ORDE_xxx / CHAR_xxx
+  if (!/^[\w-]{1,64}$/.test(String(payment_id))) {
     return res.status(400).json({ error: 'Invalid payment_id' });
   }
 

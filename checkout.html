@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Finalizar Compra — Solare</title>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://assets.pagseguro.com.br/checkout-sdk/npm/release/4.3.28/browser/pag-seguro.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -366,25 +366,8 @@
         .pix-info-box strong { font-size: 14px; display: block; margin-bottom: 3px; color: #1b5e20; }
         .pix-info-box p { font-size: 13px; color: #2e7d32; line-height: 1.5; }
 
-        /* ── MP CARD INPUTS ── */
+        /* ── CARD INPUTS ── */
         #card-payment-form { display: none; }
-        #form-checkout__cardNumber-container,
-        #form-checkout__expirationDate-container,
-        #form-checkout__securityCode-container {
-            height: 48px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            background: white;
-            overflow: hidden;
-            transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        #form-checkout__cardNumber-container:focus-within,
-        #form-checkout__expirationDate-container:focus-within,
-        #form-checkout__securityCode-container:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(76,175,80,0.13);
-        }
-        .mp-input-container iframe { width: 100%; height: 100%; border: 0; }
         #card-form-status { font-size: 12px; margin: 8px 0; font-weight: 500; min-height: 18px; }
 
         /* ── BUTTONS ── */
@@ -951,40 +934,28 @@
                     <form id="form-checkout" onsubmit="return false">
                         <div class="form-group">
                             <label>Número do Cartão</label>
-                            <div id="form-checkout__cardNumber-container" class="mp-input-container"></div>
+                            <input type="text" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric" autocomplete="cc-number">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Vencimento</label>
-                                <div id="form-checkout__expirationDate-container" class="mp-input-container"></div>
+                                <input type="text" id="card-expiry" placeholder="MM/AA" maxlength="5" inputmode="numeric" autocomplete="cc-exp">
                             </div>
                             <div class="form-group">
                                 <label>CVV</label>
-                                <div id="form-checkout__securityCode-container" class="mp-input-container"></div>
+                                <input type="text" id="card-cvv" placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc">
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Titular do Cartão</label>
-                            <input type="text" id="form-checkout__cardholderName" placeholder="Nome como no cartão" autocomplete="cc-name">
+                            <input type="text" id="card-holder" placeholder="Nome como no cartão" autocomplete="cc-name">
                         </div>
-                        <!-- MP SDK fields: visually hidden but accessible to JS (display:none breaks the SDK) -->
-                        <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;" aria-hidden="true">
-                            <select id="form-checkout__identificationType" class="mp-select" tabindex="-1"></select>
-                            <input type="text" id="form-checkout__identificationNumber" tabindex="-1">
-                        </div>
-                        <input type="hidden" id="form-checkout__cardholderEmail">
                         <div class="form-group">
                             <label>Parcelas</label>
-                            <select id="form-checkout__installments" class="mp-select"></select>
+                            <select id="card-installments" class="mp-select"></select>
                         </div>
-                        <div class="form-group">
-                            <label>Banco Emissor</label>
-                            <select id="form-checkout__issuer" class="mp-select"></select>
-                        </div>
-                        <div id="card-form-status">
-                            <span style="color:var(--muted);font-size:12px;"><i class="fas fa-circle-notch fa-spin"></i> Carregando campos seguros...</span>
-                        </div>
-                        <button class="btn-pay" id="form-checkout__submit">
+                        <div id="card-form-status"></div>
+                        <button class="btn-pay" id="btn-card-submit" onclick="payWithCard()">
                             <i class="fas fa-lock"></i>
                             <span>FINALIZAR PAGAMENTO</span>
                         </button>
@@ -993,7 +964,7 @@
 
                 <div class="trust-row">
                     <div class="trust-item"><i class="fas fa-shield-alt"></i> SSL 256-bit</div>
-                    <div class="trust-item"><i class="fas fa-lock"></i> Mercado Pago</div>
+                    <div class="trust-item"><i class="fas fa-lock"></i> PagBank</div>
                     <div class="trust-item"><i class="fas fa-undo"></i> 90 dias garantia</div>
                 </div>
             </div>
@@ -1096,14 +1067,11 @@
 </footer>
 
 <script>
-    const mp = new MercadoPago('APP_USR-99761fc8-3427-45b4-afa9-610b72f57f5b');
     let paymentType = 'pix';
-    let cardFormBound = false;
-    let cardFormInstance = null;
 
     const urlParams = new URLSearchParams(window.location.search);
     let qty = parseInt(urlParams.get('qty') || '1');
-    const price = parseFloat(urlParams.get('price') || '8.00'); // bundle total price for selected qty
+    const price = parseFloat(urlParams.get('price') || '8.00');
     const light = urlParams.get('light') || 'warm';
     let selectedShippingPrice = 0;
     let selectedShippingName = 'Envio Regular (Grátis)';
@@ -1373,121 +1341,137 @@
         document.getElementById('card-payment-form').style.display = type === 'card' ? 'block' : 'none';
         const pixRow = document.getElementById('pay-pix-row');
         if (pixRow) pixRow.style.display = type === 'pix' ? 'flex' : 'none';
-        if (type === 'card') {
-            syncFields();
-            if (!cardFormBound) {
-                requestAnimationFrame(() => requestAnimationFrame(() => initCardForm()));
-            }
+        if (type === 'card') populateInstallments();
+    }
+
+    // ── INSTALLMENTS ──────────────────────────────────────
+    function populateInstallments() {
+        const sel = document.getElementById('card-installments');
+        if (!sel || sel.options.length > 1) return;
+        sel.innerHTML = '';
+        const total = price + selectedShippingPrice;
+        for (let i = 1; i <= 12; i++) {
+            const val = (total / i).toFixed(2).replace('.', ',');
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${i}x de R$ ${val}${i === 1 ? ' (sem juros)' : ' (sem juros)'}`;
+            sel.appendChild(opt);
         }
     }
 
-    function syncFields() {
-        document.getElementById('form-checkout__identificationNumber').value = document.getElementById('cust-cpf').value.replace(/\D/g, '');
-        document.getElementById('form-checkout__cardholderEmail').value = document.getElementById('cust-email').value;
-    }
+    // ── CARD INPUT MASKS ──────────────────────────────────
+    document.getElementById('card-number')?.addEventListener('input', function() {
+        let v = this.value.replace(/\D/g, '').slice(0, 16);
+        v = v.replace(/(.{4})/g, '$1 ').trim();
+        this.value = v;
+    });
+    document.getElementById('card-expiry')?.addEventListener('input', function() {
+        let v = this.value.replace(/\D/g, '').slice(0, 4);
+        if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+        this.value = v;
+    });
+    document.getElementById('card-cvv')?.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 4);
+    });
 
-    // ── CARD FORM (MP SDK) ────────────────────────────────
-    function initCardForm() {
-        if (cardFormBound) return;
-        // Cleanup any previous failed instance before retrying
-        if (cardFormInstance) {
-            try { cardFormInstance.unmount(); } catch(e) {}
-            cardFormInstance = null;
+    // ── CARD PAYMENT (PagBank SDK) ────────────────────────
+    async function payWithCard() {
+        if (!validateStep1() || !validateStep2()) {
+            alert('Verifique os dados dos passos anteriores.');
+            return;
         }
-        const status = document.getElementById('card-form-status');
+
+        const number = document.getElementById('card-number').value.replace(/\s/g, '');
+        const expiry = document.getElementById('card-expiry').value;
+        const cvv    = document.getElementById('card-cvv').value;
+        const holder = document.getElementById('card-holder').value.trim();
+        const installments = document.getElementById('card-installments').value || '1';
+
+        if (number.length < 13) { alert('Número do cartão inválido.'); return; }
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) { alert('Vencimento inválido. Use MM/AA.'); return; }
+        if (cvv.length < 3) { alert('CVV inválido.'); return; }
+        if (!holder) { alert('Informe o nome do titular.'); return; }
+
+        const [expMonth, expYear] = expiry.split('/');
+
+        document.getElementById('loading-overlay').classList.add('active');
         try {
-            cardFormInstance = mp.cardForm({
-                amount: (price + selectedShippingPrice).toString(),
-                iframe: true,
-                form: {
-                    id: 'form-checkout',
-                    cardNumber: { id: 'form-checkout__cardNumber-container', placeholder: 'Número do cartão' },
-                    expirationDate: { id: 'form-checkout__expirationDate-container', placeholder: 'MM/AA' },
-                    securityCode: { id: 'form-checkout__securityCode-container', placeholder: 'CVV' },
-                    installments: { id: 'form-checkout__installments' },
-                    issuer: { id: 'form-checkout__issuer' },
-                    cardholderName: { id: 'form-checkout__cardholderName' },
-                    cardholderEmail: { id: 'form-checkout__cardholderEmail' },
-                    identificationType: { id: 'form-checkout__identificationType' },
-                    identificationNumber: { id: 'form-checkout__identificationNumber' },
-                },
-                callbacks: {
-                    onFormMounted: error => {
-                        if (error) {
-                            console.error('Card form mount error:', error);
-                            status.innerHTML = `<span style="color:var(--danger);cursor:pointer;font-size:12px;" onclick="cardFormBound=false;initCardForm()"><i class="fas fa-exclamation-triangle"></i> Erro ao carregar campos. Toque para tentar novamente.</span>`;
-                        } else {
-                            status.innerHTML = `<span style="color:var(--accent);font-size:12px;"><i class="fas fa-check-circle"></i> Pagamento seguro ativado</span>`;
-                            cardFormBound = true;
-                        }
-                    },
-                    onSubmit: async event => {
-                        event.preventDefault();
-                        if (!validateStep1() || !validateStep2()) {
-                            alert('Verifique os dados dos passos anteriores.');
-                            return;
-                        }
-                        syncFields();
-                        const data = cardFormInstance.getCardFormData();
-                        if (!data.token) { alert('Verifique os dados do cartão e tente novamente.'); return; }
-                        if (!data.paymentMethodId) { alert('Bandeira do cartão não reconhecida. Verifique o número.'); return; }
-                        document.getElementById('loading-overlay').classList.add('active');
-                        try {
-                            const res = await fetch('/api/process-payment', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    customerName: document.getElementById('cust-name').value,
-                                    customerEmail: document.getElementById('cust-email').value,
-                                    customerCpf: document.getElementById('cust-cpf').value,
-                                    customerPhone: document.getElementById('cust-phone').value,
-                                    customerAddress: {
-                                        cep: document.getElementById('addr-cep').value,
-                                        street: document.getElementById('addr-street').value,
-                                        number: document.getElementById('addr-num').value,
-                                        neighborhood: document.getElementById('addr-neighborhood').value,
-                                        city: document.getElementById('addr-city').value,
-                                        state: document.getElementById('addr-state').value,
-                                    },
-                                    quantity: qty,
-                                    lightColor: light,
-                                    totalPrice: price + selectedShippingPrice,
-                                    paymentMethodId: data.paymentMethodId,
-                                    token: data.token,
-                                    installments: data.installments,
-                                    issuerId: data.issuerId,
-                                    shippingMethod: selectedShippingName,
-                                    shippingPrice: selectedShippingPrice,
-                                })
-                            });
-                            const result = await res.json();
-                            if (!res.ok) {
-                                const reason = result.details?.cause?.[0]?.description || result.details?.message || result.error || 'Erro desconhecido';
-                                console.error('Card payment error:', result);
-                                if (typeof fbq !== 'undefined') { fbq('track','Purchase',{value:price+selectedShippingPrice,currency:'BRL',content_ids:['solare-luminaria'],content_type:'product'}); fbq('trackCustom','PurchaseNewClient',{value:price+selectedShippingPrice,currency:'BRL'}); fbq('trackCustom','PurchaseCard',{value:price+selectedShippingPrice,currency:'BRL'}); }
-                                alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
-                            } else if (result.status === 'approved') {
-                                window.location.href = `/obrigado.html?id=${result.id}&type=card&total=${price+selectedShippingPrice}`;
-                            } else if (result.status === 'in_process' || result.status === 'pending') {
-                                window.location.href = `/obrigado.html?id=${result.id}&type=card&status=${result.status}&total=${price+selectedShippingPrice}`;
-                            } else {
-                                const reason = result.status_detail || 'Verifique os dados ou o limite do cartão.';
-                                console.error('Card payment declined:', result);
-                                if (typeof fbq !== 'undefined') { fbq('track','Purchase',{value:price+selectedShippingPrice,currency:'BRL',content_ids:['solare-luminaria'],content_type:'product'}); fbq('trackCustom','PurchaseNewClient',{value:price+selectedShippingPrice,currency:'BRL'}); fbq('trackCustom','PurchaseCard',{value:price+selectedShippingPrice,currency:'BRL'}); }
-                                alert(`Pagamento recusado: ${reason}`);
-                            }
-                        } catch (e) {
-                            console.error('Card payment fetch error:', e);
-                            alert('Erro de conexão. Verifique sua internet e tente novamente.');
-                        } finally {
-                            document.getElementById('loading-overlay').classList.remove('active');
-                        }
-                    }
-                }
+            // Fetch PagBank public key via backend proxy
+            const pkRes = await fetch('/api/pagbank-public-key');
+            const pkData = await pkRes.json();
+            if (!pkData.public_key) throw new Error('Public key not available');
+
+            // Encrypt card with PagBank SDK
+            const encrypted = PagSeguro.encryptCard({
+                publicKey:    pkData.public_key,
+                holder:       holder.toUpperCase(),
+                number:       number,
+                expMonth:     expMonth,
+                expYear:      '20' + expYear,
+                securityCode: cvv,
             });
+
+            if (encrypted.hasErrors) {
+                console.error('PagBank encryption errors:', encrypted.errors);
+                alert('Dados do cartão inválidos. Verifique e tente novamente.');
+                return;
+            }
+
+            const res = await fetch('/api/process-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customerName: document.getElementById('cust-name').value,
+                    customerEmail: document.getElementById('cust-email').value,
+                    customerCpf: document.getElementById('cust-cpf').value,
+                    customerPhone: document.getElementById('cust-phone').value,
+                    customerAddress: {
+                        cep:          document.getElementById('addr-cep').value,
+                        street:       document.getElementById('addr-street').value,
+                        number:       document.getElementById('addr-num').value,
+                        neighborhood: document.getElementById('addr-neighborhood').value,
+                        city:         document.getElementById('addr-city').value,
+                        state:        document.getElementById('addr-state').value,
+                    },
+                    quantity:        qty,
+                    lightColor:      light,
+                    totalPrice:      price + selectedShippingPrice,
+                    paymentMethodId: 'credit_card',
+                    cardEncrypted:   encrypted.encryptedCard,
+                    cardHolder:      holder,
+                    installments:    installments,
+                    shippingMethod:  selectedShippingName,
+                    shippingPrice:   selectedShippingPrice,
+                })
+            });
+
+            const result = await res.json();
+            const total  = price + selectedShippingPrice;
+
+            if (!res.ok) {
+                const reason = result.error || 'Erro desconhecido';
+                console.error('Card payment error:', result);
+                alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
+            } else if (result.status === 'approved') {
+                if (typeof fbq !== 'undefined') {
+                    fbq('track','Purchase',{value:total,currency:'BRL',content_ids:['solare-luminaria'],content_type:'product'});
+                    fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'});
+                    fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'});
+                }
+                const dest = result.orderId
+                    ? `/upsell.html?orderId=${result.orderId}`
+                    : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
+                window.location.href = dest;
+            } else {
+                const reason = result.error || 'Verifique os dados ou o limite do cartão.';
+                console.error('Card payment declined:', result);
+                alert(`Pagamento recusado: ${reason}`);
+            }
         } catch (e) {
-            console.error('Card form init error:', e);
-            document.getElementById('card-form-status').innerHTML = `<span style="color:var(--danger);font-size:12px;cursor:pointer;" onclick="cardFormBound=false;initCardForm()">Erro ao carregar campos. Toque para tentar novamente.</span>`;
+            console.error('Card payment error:', e);
+            alert('Erro ao processar pagamento. Verifique sua internet e tente novamente.');
+        } finally {
+            document.getElementById('loading-overlay').classList.remove('active');
         }
     }
 
@@ -1525,12 +1509,9 @@
                 const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
                 window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
             } else {
-                const mpCause = result.details?.cause?.[0]?.description
-                    || result.details?.message
-                    || result.error
-                    || 'Erro desconhecido';
-                console.error('MP Pix error:', result);
-                alert(`Não foi possível gerar o Pix.\nMotivo: ${mpCause}\n\nTente novamente ou use o cartão.`);
+                const cause = result.error || 'Erro desconhecido';
+                console.error('Pix error:', result);
+                alert(`Não foi possível gerar o Pix.\nMotivo: ${cause}\n\nTente novamente ou use o cartão.`);
             }
         } catch (e) {
             console.error('Pix fetch error:', e);

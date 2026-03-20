@@ -117,10 +117,10 @@
             <span class="urgency-msg" id="urgency-msg">Finalize seu pagamento antes que o código Pix expire!</span>
         </div>
 
-        <!-- MP Seal -->
+        <!-- PagBank Seal -->
         <div class="mp-seal">
             <span>Pagamento processado por</span>
-            <img src="https://logodownload.org/wp-content/uploads/2019/06/mercado-pago-logo-1.png" alt="Mercado Pago">
+            <img src="https://logodownload.org/wp-content/uploads/2023/01/pagbank-logo.png" alt="PagBank">
         </div>
 
         <!-- Expired Message -->
@@ -176,7 +176,7 @@
         document.getElementById('status-title').innerText = 'Aguardando Pagamento';
         document.getElementById('status-desc').innerText = 'Para finalizar, pague o Pix abaixo:';
         document.getElementById('pix-area').style.display = 'block';
-        document.getElementById('qr-img').src = `data:image/png;base64,${pixImg}`;
+        document.getElementById('qr-img').src = pixImg; // PagBank returns a PNG URL
         document.getElementById('pix-code').innerText = pixCode;
 
         // Iniciar polling para Pix
