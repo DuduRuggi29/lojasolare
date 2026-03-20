@@ -1254,7 +1254,6 @@
         if (n === 1) {
             document.getElementById('txt-sum-1').textContent = document.getElementById('cust-name').value;
             document.getElementById('txt-sum-email-1').textContent = document.getElementById('cust-email').value;
-            syncFields();
         } else if (n === 2) {
             const street = document.getElementById('addr-street').value;
             const num = document.getElementById('addr-num').value;
@@ -1282,7 +1281,6 @@
             document.getElementById(`head-${next}`).classList.remove('locked');
             document.getElementById(`step-${next}`).classList.add('is-active');
             if (next === 4) {
-                syncFields();
                 if (typeof fbq !== 'undefined') {
                     fbq('track', 'AddPaymentInfo', {
                         content_ids: ['solare-luminaria'],
