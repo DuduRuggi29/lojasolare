@@ -226,13 +226,13 @@
   <div class="main">
     <!-- KPI Cards -->
     <div class="kpi-grid" id="kpi-grid">
-      <div class="kpi"><div class="kpi-icon">📦</div><div class="kpi-label">Total de Pedidos</div><div class="kpi-value" id="s-total">—</div><div class="kpi-sub">Todos os tempos</div></div>
-      <div class="kpi"><div class="kpi-icon">✅</div><div class="kpi-label">Pedidos Pagos</div><div class="kpi-value green" id="s-pagos">—</div><div class="kpi-sub">Aprovados</div></div>
-      <div class="kpi"><div class="kpi-icon">⏳</div><div class="kpi-label">Pix Pendente</div><div class="kpi-value yellow" id="s-pix-pend">—</div><div class="kpi-sub">Aguardando pagamento</div></div>
-      <div class="kpi"><div class="kpi-icon">💰</div><div class="kpi-label">Total Faturado</div><div class="kpi-value green" id="s-faturado">—</div><div class="kpi-sub">Pedidos aprovados</div></div>
-      <div class="kpi"><div class="kpi-icon">📅</div><div class="kpi-label">Faturado Hoje</div><div class="kpi-value green" id="s-hoje">—</div><div class="kpi-sub" id="s-hoje-sub">— aprovados hoje</div></div>
-      <div class="kpi"><div class="kpi-icon">💳</div><div class="kpi-label">Cartão Aprovado</div><div class="kpi-value" id="s-cartao">—</div><div class="kpi-sub">Vendas no cartão</div></div>
-      <div class="kpi"><div class="kpi-icon">🔵</div><div class="kpi-label">Pix Aprovado</div><div class="kpi-value" id="s-pix-ok">—</div><div class="kpi-sub">Vendas no Pix</div></div>
+      <div class="kpi"><div class="kpi-icon">📦</div><div class="kpi-label">Total de Pedidos</div><div class="kpi-value" id="s-total">—</div><div class="kpi-sub" id="s-total-sub">período selecionado</div></div>
+      <div class="kpi"><div class="kpi-icon">✅</div><div class="kpi-label">Pedidos Pagos</div><div class="kpi-value green" id="s-pagos">—</div><div class="kpi-sub" id="s-pagos-sub">aprovados</div></div>
+      <div class="kpi"><div class="kpi-icon">⏳</div><div class="kpi-label">Pix Pendente</div><div class="kpi-value yellow" id="s-pix-pend">—</div><div class="kpi-sub">aguardando pagamento</div></div>
+      <div class="kpi"><div class="kpi-icon">💰</div><div class="kpi-label">Total Faturado</div><div class="kpi-value green" id="s-faturado">—</div><div class="kpi-sub" id="s-faturado-sub">pedidos aprovados</div></div>
+      <div class="kpi"><div class="kpi-icon">📅</div><div class="kpi-label" id="s-periodo-label">Faturado Hoje</div><div class="kpi-value green" id="s-hoje">—</div><div class="kpi-sub" id="s-hoje-sub">— aprovados</div></div>
+      <div class="kpi"><div class="kpi-icon">💳</div><div class="kpi-label">Cartão Aprovado</div><div class="kpi-value" id="s-cartao">—</div><div class="kpi-sub">vendas no cartão</div></div>
+      <div class="kpi"><div class="kpi-icon">🔵</div><div class="kpi-label">Pix Aprovado</div><div class="kpi-value" id="s-pix-ok">—</div><div class="kpi-sub">vendas no Pix</div></div>
     </div>
 
     <!-- Filters -->
@@ -269,7 +269,9 @@
       </div>
       <button class="filter-btn" onclick="applyFilters()">Filtrar</button>
       <button class="filter-clear" onclick="clearFilters()">Limpar</button>
+      <button class="filter-clear" id="sync-btn" onclick="syncPending()" style="border-color:#ca8a04;color:#ca8a04">⟳ Sincronizar pendentes</button>
     </div>
+    <div id="sync-msg" style="font-size:13px;color:var(--green);margin-top:-8px;margin-bottom:4px;display:none"></div>
 
     <!-- Table -->
     <div class="table-wrap">
@@ -405,7 +407,7 @@
       if (!force && sig === lastSignature) return; // sem mudança, não re-renderiza
       lastSignature = sig;
 
-      renderKpis(data.stats);
+      renderKpis(data.stats, data.hasFilters);
       renderTable(data.orders);
       renderPagination(data.total, data.page, data.totalPages);
       totalPages = data.totalPages;
@@ -429,15 +431,58 @@
     return 'R$ ' + parseFloat(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function renderKpis(s) {
-    document.getElementById('s-total').textContent     = s.total_pedidos;
-    document.getElementById('s-pagos').textContent     = s.total_pagos;
-    document.getElementById('s-pix-pend').textContent  = s.total_pix_pendente;
-    document.getElementById('s-faturado').textContent  = fmt(s.total_faturado);
-    document.getElementById('s-hoje').textContent      = fmt(s.faturado_hoje);
-    document.getElementById('s-hoje-sub').textContent  = `${s.pagos_hoje} aprovados hoje`;
-    document.getElementById('s-cartao').textContent    = s.cartao_total;
-    document.getElementById('s-pix-ok').textContent    = s.pix_total;
+  function renderKpis(s, hasFilters) {
+    const periodoLabel = s.periodo_label || 'Hoje';
+    const isTodayOnly  = periodoLabel === 'Hoje';
+
+    document.getElementById('s-total').textContent        = s.total_pedidos;
+    document.getElementById('s-total-sub').textContent    = hasFilters ? periodoLabel : 'período selecionado';
+    document.getElementById('s-pagos').textContent        = s.total_pagos;
+    document.getElementById('s-pagos-sub').textContent    = hasFilters ? `aprovados em ${periodoLabel}` : 'aprovados';
+    document.getElementById('s-pix-pend').textContent     = s.total_pix_pendente;
+    document.getElementById('s-faturado').textContent     = fmt(s.total_faturado);
+    document.getElementById('s-faturado-sub').textContent = hasFilters ? periodoLabel : 'todos aprovados';
+
+    // Card "período" — Hoje quando sem filtro, período filtrado quando com filtro
+    document.getElementById('s-periodo-label').textContent = hasFilters ? `Faturado — ${periodoLabel}` : 'Faturado Hoje';
+    document.getElementById('s-hoje').textContent          = fmt(s.faturado_periodo);
+    document.getElementById('s-hoje-sub').textContent      = `${s.pagos_periodo} aprovados`;
+
+    document.getElementById('s-cartao').textContent = s.cartao_total;
+    document.getElementById('s-pix-ok').textContent  = s.pix_total;
+  }
+
+  // ── Sincronizar pendentes ─────────────────────────────────────
+  async function syncPending() {
+    const btn = document.getElementById('sync-btn');
+    const msg = document.getElementById('sync-msg');
+    btn.disabled = true;
+    btn.textContent = '⟳ Sincronizando...';
+    msg.style.display = 'none';
+    try {
+      const res  = await fetch('/api/sync-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      msg.style.display = 'block';
+      if (data.updated > 0) {
+        msg.style.color = 'var(--green)';
+        msg.textContent = `✅ ${data.updated} pedido(s) atualizado(s) de ${data.total} pendentes verificados.`;
+        lastSignature = ''; // força re-render
+        loadData(true);
+      } else {
+        msg.style.color = 'var(--muted)';
+        msg.textContent = `Nenhuma mudança em ${data.total || 0} pedidos pendentes.`;
+      }
+    } catch (e) {
+      msg.style.display = 'block';
+      msg.style.color = 'var(--red)';
+      msg.textContent = 'Erro ao sincronizar.';
+    }
+    btn.disabled = false;
+    btn.textContent = '⟳ Sincronizar pendentes';
   }
 
   // ── Render Table ──────────────────────────────────────────────
