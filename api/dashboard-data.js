@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       faturado_hoje:    allOrders.filter(o => o.status === 'approved' && o.created_at?.slice(0, 10) === today).reduce((s, o) => s + parseFloat(o.total_price || 0), 0),
       pedidos_hoje:     allOrders.filter(o => o.created_at?.slice(0, 10) === today).length,
       pagos_hoje:       allOrders.filter(o => o.status === 'approved' && o.created_at?.slice(0, 10) === today).length,
-      cartao_total:     allOrders.filter(o => o.status === 'approved' && o.payment_method === 'credit_card').length,
+      cartao_total:     allOrders.filter(o => o.status === 'approved' && o.payment_method !== 'pix').length,
       pix_total:        allOrders.filter(o => o.status === 'approved' && o.payment_method === 'pix').length,
     };
 

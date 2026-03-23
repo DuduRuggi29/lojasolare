@@ -64,12 +64,12 @@
   }
   .topbar-brand { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -.5px; }
   .topbar-right { display: flex; align-items: center; gap: 14px; }
-  .refresh-badge {
+  .live-badge {
     display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
-    background: var(--gray-light); padding: 5px 12px; border-radius: 20px;
   }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .updated-at { font-size: 11px; color: var(--muted); }
   .logout-btn {
     font-size: 13px; color: var(--muted); background: none; border: 1px solid var(--border);
     padding: 6px 14px; border-radius: 8px; cursor: pointer;
@@ -215,9 +215,9 @@
   <div class="topbar">
     <div class="topbar-brand">☀ Solare — Dashboard</div>
     <div class="topbar-right">
-      <div class="refresh-badge">
+      <div class="live-badge">
         <span class="dot"></span>
-        Atualiza em <span id="countdown">30</span>s
+        <span class="updated-at" id="updated-at">ao vivo</span>
       </div>
       <button class="logout-btn" onclick="doLogout()">Sair</button>
     </div>
@@ -310,7 +310,9 @@
   let password = '';
   let currentPage = 1;
   let totalPages  = 1;
-  let refreshTimer, countdownTimer, countdownVal = 30;
+  let pollInterval = null;
+  let lastSignature = '';
+  let firstLoad = true;
 
   // ── Auth ─────────────────────────────────────────────────────
   function doLogin() {
@@ -320,13 +322,13 @@
     sessionStorage.setItem('dash_pwd', pwd);
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    loadData();
-    startAutoRefresh();
+    loadData(true);
+    startRealtime();
   }
 
   function doLogout() {
     sessionStorage.removeItem('dash_pwd');
-    password = '';
+    clearInterval(pollInterval);
     location.reload();
   }
 
@@ -334,42 +336,33 @@
     if (e.key === 'Enter') doLogin();
   });
 
-  // Auto-login from session
   const saved = sessionStorage.getItem('dash_pwd');
   if (saved) {
     password = saved;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    loadData();
-    startAutoRefresh();
+    loadData(true);
+    startRealtime();
   }
 
-  // ── Auto-refresh ──────────────────────────────────────────────
-  function startAutoRefresh() {
-    countdownVal = 30;
-    clearInterval(refreshTimer);
-    clearInterval(countdownTimer);
-    countdownTimer = setInterval(() => {
-      countdownVal--;
-      document.getElementById('countdown').textContent = countdownVal;
-      if (countdownVal <= 0) {
-        loadData();
-        countdownVal = 30;
-      }
-    }, 1000);
+  // ── Realtime polling silencioso ───────────────────────────────
+  function startRealtime() {
+    clearInterval(pollInterval);
+    pollInterval = setInterval(() => loadData(false), 5000);
   }
 
   // ── Filters ──────────────────────────────────────────────────
-  function applyFilters() { currentPage = 1; loadData(); }
+  function applyFilters() { currentPage = 1; lastSignature = ''; loadData(true); }
 
   function clearFilters() {
-    document.getElementById('f-from').value = '';
-    document.getElementById('f-to').value   = '';
+    document.getElementById('f-from').value   = '';
+    document.getElementById('f-to').value     = '';
     document.getElementById('f-status').value = 'all';
     document.getElementById('f-method').value = 'all';
     document.getElementById('f-search').value = '';
     currentPage = 1;
-    loadData();
+    lastSignature = '';
+    loadData(true);
   }
 
   document.getElementById('f-search').addEventListener('keydown', e => {
@@ -377,7 +370,7 @@
   });
 
   // ── Load Data ─────────────────────────────────────────────────
-  async function loadData() {
+  async function loadData(force = false) {
     const params = new URLSearchParams({
       password,
       page:   currentPage,
@@ -388,8 +381,11 @@
       search: document.getElementById('f-search').value,
     });
 
-    document.getElementById('orders-body').innerHTML =
-      '<tr class="loading-row"><td colspan="10"><div class="spinner"></div>Carregando...</td></tr>';
+    // Primeiro carregamento: mostra spinner
+    if (firstLoad) {
+      document.getElementById('orders-body').innerHTML =
+        '<tr class="loading-row"><td colspan="10"><div class="spinner"></div>Carregando...</td></tr>';
+    }
 
     try {
       const res  = await fetch(`/api/dashboard-data?${params}`);
@@ -397,25 +393,35 @@
 
       if (res.status === 401) {
         sessionStorage.removeItem('dash_pwd');
+        clearInterval(pollInterval);
         document.getElementById('login-err').textContent = 'Senha incorreta.';
         document.getElementById('app').style.display = 'none';
         document.getElementById('login-screen').style.display = 'flex';
         return;
       }
 
+      // Detecta mudança: compara total + created_at do primeiro pedido
+      const sig = `${data.total}|${data.orders?.[0]?.created_at || ''}|${data.stats?.total_pagos}`;
+      if (!force && sig === lastSignature) return; // sem mudança, não re-renderiza
+      lastSignature = sig;
+
       renderKpis(data.stats);
       renderTable(data.orders);
       renderPagination(data.total, data.page, data.totalPages);
       totalPages = data.totalPages;
+      firstLoad  = false;
+
+      // Atualiza horário discreto
+      const now = new Date();
+      document.getElementById('updated-at').textContent =
+        'atualizado ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     } catch (e) {
-      document.getElementById('orders-body').innerHTML =
-        '<tr class="loading-row"><td colspan="10">Erro ao carregar dados. Tente novamente.</td></tr>';
+      if (firstLoad) {
+        document.getElementById('orders-body').innerHTML =
+          '<tr class="loading-row"><td colspan="10">Erro ao carregar dados.</td></tr>';
+      }
     }
-
-    // Reset countdown
-    countdownVal = 30;
-    document.getElementById('countdown').textContent = 30;
   }
 
   // ── Render KPIs ───────────────────────────────────────────────
