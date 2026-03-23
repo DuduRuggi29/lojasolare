@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Loja Solare</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --border: #e8eaf0;
+    --text: #1a1d2e;
+    --muted: #7b8099;
+    --primary: #4f46e5;
+    --primary-light: #ede9fe;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --yellow: #ca8a04;
+    --yellow-light: #fef9c3;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --gray-light: #f1f3f7;
+    --radius: 12px;
+    --shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Login ── */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: linear-gradient(135deg, #1a1d2e 0%, #2d2f45 100%);
+  }
+  .login-box {
+    background: var(--surface); border-radius: 20px; padding: 48px 40px;
+    width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    text-align: center;
+  }
+  .login-logo { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: -1px; margin-bottom: 6px; }
+  .login-sub  { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .login-box input {
+    width: 100%; padding: 14px 16px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 15px; outline: none; margin-bottom: 14px;
+    transition: border-color .2s;
+  }
+  .login-box input:focus { border-color: var(--primary); }
+  .login-btn {
+    width: 100%; padding: 14px; background: var(--primary); color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .login-btn:hover { opacity: .9; }
+  .login-err { color: var(--red); font-size: 13px; margin-top: 10px; }
+
+  /* ── App ── */
+  #app { display: none; }
+
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-brand { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -.5px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .refresh-badge {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
+    background: var(--gray-light); padding: 5px 12px; border-radius: 20px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .logout-btn {
+    font-size: 13px; color: var(--muted); background: none; border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  }
+
+  .main { padding: 28px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+  .kpi {
+    background: var(--surface); border-radius: var(--radius); padding: 22px 20px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .kpi-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .kpi-value { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.yellow { color: var(--yellow); }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi-icon { font-size: 22px; margin-bottom: 10px; }
+
+  /* ── Filters ── */
+  .filters {
+    background: var(--surface); border-radius: var(--radius); padding: 18px 20px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-group label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .filter-group input,
+  .filter-group select {
+    padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 14px; outline: none; background: var(--bg); transition: border-color .2s;
+    min-width: 140px;
+  }
+  .filter-group input:focus,
+  .filter-group select:focus { border-color: var(--primary); background: #fff; }
+  .filter-btn {
+    padding: 9px 20px; background: var(--primary); color: #fff; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .filter-clear {
+    padding: 9px 16px; background: none; color: var(--muted); border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; cursor: pointer;
+  }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .table-header {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .table-count { font-size: 13px; color: var(--muted); background: var(--gray-light); padding: 3px 10px; border-radius: 20px; }
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+    background: var(--gray-light); border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #fafbff; }
+  td { padding: 13px 16px; vertical-align: middle; }
+  td.nowrap { white-space: nowrap; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge-green  { background: var(--green-light); color: var(--green); }
+  .badge-yellow { background: var(--yellow-light); color: var(--yellow); }
+  .badge-red    { background: var(--red-light); color: var(--red); }
+  .badge-gray   { background: var(--gray-light); color: var(--muted); }
+
+  .method-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+  }
+  .method-pix    { background: #e0f2fe; color: #0369a1; }
+  .method-card   { background: #f3e8ff; color: #7c3aed; }
+
+  .customer-name { font-weight: 600; color: var(--text); }
+  .customer-email { font-size: 12px; color: var(--muted); }
+
+  .price { font-weight: 700; color: var(--text); }
+
+  /* ── Pagination ── */
+  .pagination {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .pagination-info { font-size: 13px; color: var(--muted); }
+  .pagination-btns { display: flex; gap: 6px; }
+  .page-btn {
+    padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 13px; font-weight: 600; cursor: pointer; background: var(--surface);
+    color: var(--text); transition: all .15s;
+  }
+  .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Loading / Empty ── */
+  .loading-row td { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .main { padding: 16px; }
+    .topbar { padding: 14px 16px; }
+    .kpi-value { font-size: 22px; }
+    .filters { flex-direction: column; }
+    .filter-group input, .filter-group select { min-width: unset; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">☀ Solare</div>
+    <div class="login-sub">Painel administrativo</div>
+    <input type="password" id="pwd-input" placeholder="Senha de acesso" autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">☀ Solare — Dashboard</div>
+    <div class="topbar-right">
+      <div class="refresh-badge">
+        <span class="dot"></span>
+        Atualiza em <span id="countdown">30</span>s
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi"><div class="kpi-icon">📦</div><div class="kpi-label">Total de Pedidos</div><div class="kpi-value" id="s-total">—</div><div class="kpi-sub">Todos os tempos</div></div>
+      <div class="kpi"><div class="kpi-icon">✅</div><div class="kpi-label">Pedidos Pagos</div><div class="kpi-value green" id="s-pagos">—</div><div class="kpi-sub">Aprovados</div></div>
+      <div class="kpi"><div class="kpi-icon">⏳</div><div class="kpi-label">Pix Pendente</div><div class="kpi-value yellow" id="s-pix-pend">—</div><div class="kpi-sub">Aguardando pagamento</div></div>
+      <div class="kpi"><div class="kpi-icon">💰</div><div class="kpi-label">Total Faturado</div><div class="kpi-value green" id="s-faturado">—</div><div class="kpi-sub">Pedidos aprovados</div></div>
+      <div class="kpi"><div class="kpi-icon">📅</div><div class="kpi-label">Faturado Hoje</div><div class="kpi-value green" id="s-hoje">—</div><div class="kpi-sub" id="s-hoje-sub">— aprovados hoje</div></div>
+      <div class="kpi"><div class="kpi-icon">💳</div><div class="kpi-label">Cartão Aprovado</div><div class="kpi-value" id="s-cartao">—</div><div class="kpi-sub">Vendas no cartão</div></div>
+      <div class="kpi"><div class="kpi-icon">🔵</div><div class="kpi-label">Pix Aprovado</div><div class="kpi-value" id="s-pix-ok">—</div><div class="kpi-sub">Vendas no Pix</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>De</label>
+        <input type="date" id="f-from">
+      </div>
+      <div class="filter-group">
+        <label>Até</label>
+        <input type="date" id="f-to">
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="all">Todos</option>
+          <option value="approved">✅ Pago</option>
+          <option value="pending">⏳ Pendente</option>
+          <option value="rejected">❌ Rejeitado</option>
+          <option value="cancelled">🚫 Cancelado</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Pagamento</label>
+        <select id="f-method">
+          <option value="all">Todos</option>
+          <option value="pix">Pix</option>
+          <option value="credit_card">Cartão</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Buscar cliente</label>
+        <input type="text" id="f-search" placeholder="Nome, e-mail ou telefone">
+      </div>
+      <button class="filter-btn" onclick="applyFilters()">Filtrar</button>
+      <button class="filter-clear" onclick="clearFilters()">Limpar</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">Pedidos</div>
+        <div class="table-count" id="table-count">—</div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Data / Hora</th>
+              <th>Cliente</th>
+              <th>Telefone</th>
+              <th>Endereço</th>
+              <th>Qtd</th>
+              <th>Cor</th>
+              <th>Valor</th>
+              <th>Frete</th>
+              <th>Pagamento</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr class="loading-row"><td colspan="10"><div class="spinner"></div>Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination" style="display:none">
+        <div class="pagination-info" id="pagination-info"></div>
+        <div class="pagination-btns" id="pagination-btns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let password = '';
+  let currentPage = 1;
+  let totalPages  = 1;
+  let refreshTimer, countdownTimer, countdownVal = 30;
+
+  // ── Auth ─────────────────────────────────────────────────────
+  function doLogin() {
+    const pwd = document.getElementById('pwd-input').value.trim();
+    if (!pwd) return;
+    password = pwd;
+    sessionStorage.setItem('dash_pwd', pwd);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadData();
+    startAutoRefresh();
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem('dash_pwd');
+    password = '';
+    location.reload();
+  }
+
+  document.getElementById('pwd-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // Auto-login from session
+  const saved = sessionStorage.getItem('dash_pwd');
+  if (saved) {
+    password = saved;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadData();
+    startAutoRefresh();
+  }
+
+  // ── Auto-refresh ──────────────────────────────────────────────
+  function startAutoRefresh() {
+    countdownVal = 30;
+    clearInterval(refreshTimer);
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      countdownVal--;
+      document.getElementById('countdown').textContent = countdownVal;
+      if (countdownVal <= 0) {
+        loadData();
+        countdownVal = 30;
+      }
+    }, 1000);
+  }
+
+  // ── Filters ──────────────────────────────────────────────────
+  function applyFilters() { currentPage = 1; loadData(); }
+
+  function clearFilters() {
+    document.getElementById('f-from').value = '';
+    document.getElementById('f-to').value   = '';
+    document.getElementById('f-status').value = 'all';
+    document.getElementById('f-method').value = 'all';
+    document.getElementById('f-search').value = '';
+    currentPage = 1;
+    loadData();
+  }
+
+  document.getElementById('f-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') applyFilters();
+  });
+
+  // ── Load Data ─────────────────────────────────────────────────
+  async function loadData() {
+    const params = new URLSearchParams({
+      password,
+      page:   currentPage,
+      from:   document.getElementById('f-from').value,
+      to:     document.getElementById('f-to').value,
+      status: document.getElementById('f-status').value,
+      method: document.getElementById('f-method').value,
+      search: document.getElementById('f-search').value,
+    });
+
+    document.getElementById('orders-body').innerHTML =
+      '<tr class="loading-row"><td colspan="10"><div class="spinner"></div>Carregando...</td></tr>';
+
+    try {
+      const res  = await fetch(`/api/dashboard-data?${params}`);
+      const data = await res.json();
+
+      if (res.status === 401) {
+        sessionStorage.removeItem('dash_pwd');
+        document.getElementById('login-err').textContent = 'Senha incorreta.';
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        return;
+      }
+
+      renderKpis(data.stats);
+      renderTable(data.orders);
+      renderPagination(data.total, data.page, data.totalPages);
+      totalPages = data.totalPages;
+
+    } catch (e) {
+      document.getElementById('orders-body').innerHTML =
+        '<tr class="loading-row"><td colspan="10">Erro ao carregar dados. Tente novamente.</td></tr>';
+    }
+
+    // Reset countdown
+    countdownVal = 30;
+    document.getElementById('countdown').textContent = 30;
+  }
+
+  // ── Render KPIs ───────────────────────────────────────────────
+  function fmt(n) {
+    return 'R$ ' + parseFloat(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderKpis(s) {
+    document.getElementById('s-total').textContent     = s.total_pedidos;
+    document.getElementById('s-pagos').textContent     = s.total_pagos;
+    document.getElementById('s-pix-pend').textContent  = s.total_pix_pendente;
+    document.getElementById('s-faturado').textContent  = fmt(s.total_faturado);
+    document.getElementById('s-hoje').textContent      = fmt(s.faturado_hoje);
+    document.getElementById('s-hoje-sub').textContent  = `${s.pagos_hoje} aprovados hoje`;
+    document.getElementById('s-cartao').textContent    = s.cartao_total;
+    document.getElementById('s-pix-ok').textContent    = s.pix_total;
+  }
+
+  // ── Render Table ──────────────────────────────────────────────
+  function statusBadge(status) {
+    const map = {
+      approved:  ['badge-green',  '✅ Pago'],
+      pending:   ['badge-yellow', '⏳ Pendente'],
+      rejected:  ['badge-red',    '❌ Rejeitado'],
+      cancelled: ['badge-gray',   '🚫 Cancelado'],
+    };
+    const [cls, label] = map[status] || ['badge-gray', status];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  function methodBadge(method) {
+    if (method === 'pix')         return `<span class="method-badge method-pix">🔵 Pix</span>`;
+    if (method === 'credit_card') return `<span class="method-badge method-card">💳 Cartão</span>`;
+    return `<span class="method-badge">${method || '—'}</span>`;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + '<br><span style="color:var(--muted);font-size:11px">' +
+      d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '</span>';
+  }
+
+  function fmtAddress(addr) {
+    if (!addr) return '—';
+    const a = typeof addr === 'string' ? JSON.parse(addr) : addr;
+    const parts = [];
+    if (a.street)       parts.push(a.street + (a.number ? ', ' + a.number : ''));
+    if (a.neighborhood) parts.push(a.neighborhood);
+    if (a.city)         parts.push(a.city + (a.state ? ' - ' + a.state : ''));
+    if (a.cep)          parts.push('CEP: ' + a.cep);
+    return parts.join('<br>') || '—';
+  }
+
+  function renderTable(orders) {
+    if (!orders || orders.length === 0) {
+      document.getElementById('orders-body').innerHTML =
+        '<tr class="loading-row"><td colspan="10">Nenhum pedido encontrado.</td></tr>';
+      return;
+    }
+
+    document.getElementById('orders-body').innerHTML = orders.map(o => `
+      <tr>
+        <td class="nowrap">${fmtDate(o.created_at)}</td>
+        <td>
+          <div class="customer-name">${esc(o.customer_name || '—')}</div>
+          <div class="customer-email">${esc(o.customer_email || '')}</div>
+          ${o.customer_cpf ? `<div class="customer-email">CPF: ${esc(o.customer_cpf)}</div>` : ''}
+        </td>
+        <td class="nowrap">${esc(o.customer_phone || '—')}</td>
+        <td style="font-size:12px;line-height:1.6">${fmtAddress(o.customer_address)}</td>
+        <td style="text-align:center;font-weight:700">${o.product_quantity || '—'}</td>
+        <td style="font-size:12px">${esc(o.product_light_color || '—')}</td>
+        <td class="nowrap price">${fmt(o.total_price)}</td>
+        <td class="nowrap" style="font-size:12px">${o.shipping_method ? esc(o.shipping_method) + (o.shipping_price ? '<br>' + fmt(o.shipping_price) : '') : '—'}</td>
+        <td class="nowrap">${methodBadge(o.payment_method)}</td>
+        <td>${statusBadge(o.status)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Pagination ────────────────────────────────────────────────
+  function renderPagination(total, page, pages) {
+    const info = document.getElementById('pagination-info');
+    const btns = document.getElementById('pagination-btns');
+    const wrap = document.getElementById('pagination');
+    const cnt  = document.getElementById('table-count');
+
+    cnt.textContent = `${total} pedido${total !== 1 ? 's' : ''}`;
+
+    if (pages <= 1) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'flex';
+
+    const pageSize = 50;
+    const from = (page - 1) * pageSize + 1;
+    const to   = Math.min(page * pageSize, total);
+    info.textContent = `Mostrando ${from}–${to} de ${total}`;
+
+    // Build page buttons (max 7 shown)
+    let html = `<button class="page-btn" onclick="goPage(${page-1})" ${page <= 1 ? 'disabled' : ''}>‹</button>`;
+    const range = [];
+    for (let i = Math.max(1, page-2); i <= Math.min(pages, page+2); i++) range.push(i);
+    if (range[0] > 1)      { html += `<button class="page-btn" onclick="goPage(1)">1</button>`; if(range[0]>2) html += `<span style="padding:0 4px;color:var(--muted)">…</span>`; }
+    range.forEach(i => { html += `<button class="page-btn${i===page?' active':''}" onclick="goPage(${i})">${i}</button>`; });
+    if (range[range.length-1] < pages) { if(range[range.length-1]<pages-1) html += `<span style="padding:0 4px;color:var(--muted)">…</span>`; html += `<button class="page-btn" onclick="goPage(${pages})">${pages}</button>`; }
+    html += `<button class="page-btn" onclick="goPage(${page+1})" ${page >= pages ? 'disabled' : ''}>›</button>`;
+    btns.innerHTML = html;
+  }
+
+  function goPage(p) {
+    if (p < 1 || p > totalPages) return;
+    currentPage = p;
+    loadData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
