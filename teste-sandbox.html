@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Teste Sandbox PagBank — Lojas Solare</title>
+<script src="https://assets.pagseguro.com.br/checkout-sdk/npm/release/4.3.28/browser/pag-seguro.min.js"></script>
+<style>
+  body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+  button { background: #0f0; color: #000; border: none; padding: 12px 24px; font-size: 16px; cursor: pointer; font-weight: bold; margin: 10px 5px; }
+  #log { white-space: pre-wrap; background: #000; border: 1px solid #0f0; padding: 15px; margin-top: 15px; min-height: 200px; }
+  .ok { color: #0f0; } .err { color: #f44; } .info { color: #ff0; }
+</style>
+</head>
+<body>
+<h2>🧪 Teste Sandbox PagBank — Lojas Solare</h2>
+<button onclick="runPix()">▶ Testar PIX</button>
+<button onclick="runCard()">▶ Testar CARTÃO</button>
+<button onclick="copyLog()">📋 Copiar Log</button>
+<div id="log">Aguardando...</div>
+
+<script>
+const TOKEN = '1f05cb45-5c02-4934-8a69-9f0e0dc898841edcb547422c965123032b00fc70c0d27690-9146-43e1-b2d1-c0199aeacc81';
+const BASE  = 'https://sandbox.api.pagseguro.com';
+
+const log = document.getElementById('log');
+function write(msg, cls='') {
+  const ts = new Date().toLocaleTimeString('pt-BR');
+  log.innerHTML += `<span class="${cls}">[${ts}] ${msg}\n</span>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function logJSON(label, obj) {
+  write('--- ' + label + ' ---', 'info');
+  write(JSON.stringify(obj, null, 2));
+}
+
+async function runPix() {
+  log.innerHTML = '';
+  write('=== TESTE PIX ===', 'ok');
+
+  const body = {
+    reference_id: 'solare-pix-' + Date.now(),
+    customer: {
+      name: 'Jose da Silva', email: 'jose@email.com', tax_id: '12345678909',
+      phones: [{ country: '55', area: '11', number: '999999999', type: 'MOBILE' }]
+    },
+    items: [{ reference_id: 'solare-luminaria', name: 'Luminaria Solar Solare Kit 2 unidades', quantity: 1, unit_amount: 7890 }],
+    shipping: { address: { street: 'Rua das Flores', number: '100', complement: 'apto 1', locality: 'Centro', city: 'Sao Paulo', region_code: 'SP', country: 'BRA', postal_code: '01310100' } },
+    qr_codes: [{ amount: { value: 7890 }, expiration_date: '2026-12-31T23:59:00-03:00' }],
+    notification_urls: ['https://lojassolare.com.br/api/pagbank-webhook']
+  };
+
+  logJSON('REQUEST — POST ' + BASE + '/orders', body);
+
+  try {
+    const r = await fetch(BASE + '/orders', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    write('HTTP: ' + r.status, r.ok ? 'ok' : 'err');
+    logJSON('RESPONSE', data);
+    if (r.ok) write('✅ PIX OK — ID: ' + data.id, 'ok');
+    else write('❌ PIX FALHOU', 'err');
+  } catch(e) {
+    write('❌ Erro: ' + e.message, 'err');
+  }
+}
+
+async function runCard() {
+  log.innerHTML = '';
+  write('=== TESTE CARTÃO ===', 'ok');
+
+  // 1. Buscar chave pública
+  write('Buscando chave pública...', 'info');
+  let publicKey;
+  try {
+    const pkRes = await fetch(BASE + '/public-keys/card', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    const pkData = await pkRes.json();
+    logJSON('GET /public-keys/card — HTTP ' + pkRes.status, pkData);
+    publicKey = pkData.public_key;
+  } catch(e) {
+    write('❌ Erro ao buscar chave pública: ' + e.message, 'err');
+    return;
+  }
+
+  // 2. Criptografar cartão com SDK oficial
+  write('Criptografando cartão com PagSeguro.encryptCard()...', 'info');
+  if (typeof PagSeguro === 'undefined') {
+    write('❌ SDK do PagBank não carregado! Verifique sua conexão e tente novamente.', 'err');
+    return;
+  }
+
+  const encResult = PagSeguro.encryptCard({
+    publicKey: publicKey,
+    holder: 'Jose da Silva',
+    number: '4111111111111111',
+    expMonth: '12',
+    expYear: '2026',
+    securityCode: '123'
+  });
+
+  if (!encResult.encryptedCard || (encResult.errors && encResult.errors.length > 0)) {
+    write('❌ Erro na criptografia: ' + JSON.stringify(encResult.errors), 'err');
+    return;
+  }
+
+  write('✅ Cartão criptografado com sucesso', 'ok');
+  write('encrypted (primeiros 40 chars): ' + encResult.encryptedCard.slice(0,40) + '...', 'info');
+
+  // 3. Criar pedido com cartão
+  const cardBody = {
+    reference_id: 'solare-card-' + Date.now(),
+    customer: {
+      name: 'Jose da Silva', email: 'jose@email.com', tax_id: '12345678909',
+      phones: [{ country: '55', area: '11', number: '999999999', type: 'MOBILE' }]
+    },
+    items: [{ reference_id: 'solare-luminaria', name: 'Luminaria Solar Solare Kit 2 unidades', quantity: 1, unit_amount: 7890 }],
+    shipping: { address: { street: 'Rua das Flores', number: '100', complement: 'apto 1', locality: 'Centro', city: 'Sao Paulo', region_code: 'SP', country: 'BRA', postal_code: '01310100' } },
+    charges: [{
+      reference_id: 'solare-charge-' + Date.now(),
+      description: 'Luminaria Solar Solare Kit 2 unidades',
+      amount: { value: 7890, currency: 'BRL' },
+      payment_method: {
+        type: 'CREDIT_CARD', installments: 1, capture: true,
+        card: { encrypted: encResult.encryptedCard, store: true },
+        holder: { name: 'Jose da Silva', tax_id: '12345678909' }
+      }
+    }],
+    notification_urls: ['https://lojassolare.com.br/api/pagbank-webhook']
+  };
+
+  logJSON('REQUEST — POST ' + BASE + '/orders', cardBody);
+
+  try {
+    const r = await fetch(BASE + '/orders', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify(cardBody)
+    });
+    const data = await r.json();
+    write('HTTP: ' + r.status, r.ok ? 'ok' : 'err');
+    logJSON('RESPONSE', data);
+    if (r.ok) write('✅ CARTÃO OK — ChargeStatus: ' + data.charges?.[0]?.status, 'ok');
+    else write('❌ CARTÃO FALHOU', 'err');
+  } catch(e) {
+    write('❌ Erro: ' + e.message, 'err');
+  }
+}
+
+function copyLog() {
+  navigator.clipboard.writeText(log.innerText).then(() => alert('Log copiado!'));
+}
+</script>
+</body>
+</html>
