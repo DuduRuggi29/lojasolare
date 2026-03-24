@@ -3,6 +3,9 @@
 // Esta função roda no servidor Vercel (São Paulo/US) e retorna o SDK
 // com headers CORS para que o browser possa carregá-lo.
 
+// Forçar execução na região São Paulo para acessar CDN do PagBank
+export const config = { regions: ['gru1'] };
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
