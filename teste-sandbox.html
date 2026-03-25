@@ -15,7 +15,8 @@
 <body>
 <h2>🧪 Teste Sandbox PagBank — Lojas Solare</h2>
 <button id="btnPix" onclick="runPix()">▶ Testar PIX</button>
-<button id="btnCard" onclick="runCard()">▶ Testar CARTÃO</button>
+<button id="btnCard" onclick="runCard()">▶ Testar CARTÃO (SDK)</button>
+<button id="btnCardAuto" onclick="runCardAuto()">▶ Testar CARTÃO (Servidor)</button>
 <button onclick="copyLog()">📋 Copiar Log</button>
 <button onclick="document.getElementById('log').innerHTML=''">🗑 Limpar</button>
 <div id="log">Clique em um dos botões acima...</div>
@@ -87,6 +88,33 @@ async function runCard() {
     else w('❌ CARTÃO FALHOU: '+(d._response.error_messages?.[0]?.description||JSON.stringify(d._response)),'err');
   } catch(e) { w('❌ '+e.message,'err'); }
   document.getElementById('btnCard').disabled = false;
+}
+
+async function runCardAuto() {
+  log.innerHTML = '';
+  document.getElementById('btnCardAuto').disabled = true;
+  w('=== TESTE CARTÃO SERVER-SIDE (sem SDK browser) ===','ok');
+  w('Testando múltiplos formatos de criptografia RSA-OAEP...','dim');
+  w('Aguarde — isso pode levar ~10 segundos...','dim');
+  try {
+    const r = await fetch(PROXY+'?action=card-auto');
+    const d = await r.json();
+    if (d.success) {
+      w('✅ CARTÃO OK! Formato que funcionou: '+d.winning_variant,'ok');
+      w('Hash: '+d.winning_hash,'ok');
+      wj('PEDIDO CRIADO — HTTP '+d.result.status, d.result.response);
+      w('Order ID: '+d.result.response.id,'ok');
+      w('Charge Status: '+(d.result.response.charges?.[0]?.status||'?'),'ok');
+    } else {
+      w('❌ Nenhum formato funcionou ainda. Resultados:','err');
+      for (const r2 of d.all_results||[]) {
+        const icon = r2.http_status===201?'✅':r2.http_status===422?'⚠️':'❌';
+        w(`${icon} [${r2.label}] HTTP ${r2.http_status} charge=${r2.charge_status||'?'} err=${JSON.stringify(r2.error||'?').slice(0,120)}`);
+      }
+    }
+    wj('RESPOSTA COMPLETA', d);
+  } catch(e) { w('❌ '+e.message,'err'); }
+  document.getElementById('btnCardAuto').disabled = false;
 }
 
 function copyLog() {
