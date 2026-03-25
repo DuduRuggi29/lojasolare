@@ -1,5 +1,9 @@
 // Proxy para testes sandbox PagBank — roteia chamadas pelo servidor
 // evitando bloqueio CORS do browser para sandbox.api.pagseguro.com
+//
+// Formato real do SDK PagBank (JSEncrypt v3 + PKCS#1 v1.5):
+//   payload = "{numero};{cvv};{mes};{ano};{titular};{timestamp_ms}"
+//   criptografia = RSA PKCS#1 v1.5  (NÃO é OAEP)
 import crypto from 'crypto';
 
 const SANDBOX_TOKEN = '1f05cb45-5c02-4934-8a69-9f0e0dc898841edcb547422c965123032b00fc70c0d27690-9146-43e1-b2d1-c0199aeacc81';
@@ -11,12 +15,17 @@ function toPem(base64Key) {
   return `-----BEGIN PUBLIC KEY-----\n${lines}\n-----END PUBLIC KEY-----`;
 }
 
-// Criptografa payload usando RSA-OAEP
-function rsaEncrypt(pemKey, payload, hash = 'sha256') {
-  return crypto.publicEncrypt(
-    { key: pemKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: hash },
-    Buffer.from(payload, 'utf8')
-  ).toString('base64');
+// Criptografa usando RSA PKCS#1 v1.5 (formato real do SDK JSEncrypt PagBank)
+function encryptCard(pemKey, number, securityCode, expMonth, expYear, holder) {
+  const timestamp = Date.now();
+  const payload = `${number};${securityCode};${expMonth};${expYear};${holder};${timestamp}`;
+  return {
+    encrypted: crypto.publicEncrypt(
+      { key: pemKey, padding: crypto.constants.RSA_PKCS1_PADDING },
+      Buffer.from(payload, 'utf8')
+    ).toString('base64'),
+    payload
+  };
 }
 
 // Cria pedido de cartão no sandbox e retorna resultado
@@ -124,8 +133,8 @@ export default async function handler(req, res) {
       return res.status(r.status).json({ _request: body, _response: data, _status: r.status });
     }
 
-    // Testa criptografia do cartão server-side (sem SDK browser)
-    // Tenta múltiplos formatos de payload até encontrar o correto
+    // Testa criptografia do cartão server-side usando formato real do SDK PagBank
+    // Formato: "{numero};{cvv};{mes};{ano};{titular};{timestamp}" com RSA PKCS#1 v1.5
     if (action === 'card-auto') {
       // Etapa 1: buscar chave pública
       const pkRes = await fetch(`${SANDBOX_BASE}/public-keys/card`, {
@@ -134,118 +143,50 @@ export default async function handler(req, res) {
       if (!pkRes.ok) {
         return res.status(502).json({ error: 'Falha ao buscar chave pública', status: pkRes.status });
       }
-      const { public_key } = await pkRes.json();
+      const pkData = await pkRes.json();
+      const public_key = pkData.public_key;
       const pem = toPem(public_key);
 
-      // Dados do cartão de teste (Visa sandbox PagBank)
-      const card = {
-        number: '4111111111111111',
-        expMonth: '12',
-        expYear: '2026',
-        securityCode: '123',
-        holder: 'Jose da Silva'
-      };
-
-      // Variações de payload para testar
-      const variants = [
-        // PT-BR com anoExpiracao 4 dígitos, SHA-256
-        {
-          label: 'pt4d-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ numero: card.number, mesExpiracao: card.expMonth, anoExpiracao: card.expYear, codigoSeguranca: card.securityCode, nomeTitular: card.holder.toUpperCase() })
-        },
-        // PT-BR com anoExpiracao 2 dígitos, SHA-256
-        {
-          label: 'pt2d-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ numero: card.number, mesExpiracao: card.expMonth, anoExpiracao: '26', codigoSeguranca: card.securityCode, nomeTitular: card.holder.toUpperCase() })
-        },
-        // PT-BR mixed case holder, SHA-256
-        {
-          label: 'pt4d-mixed-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ numero: card.number, mesExpiracao: card.expMonth, anoExpiracao: card.expYear, codigoSeguranca: card.securityCode, nomeTitular: card.holder })
-        },
-        // EN field names (matching SDK input), SHA-256
-        {
-          label: 'en-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ number: card.number, expMonth: card.expMonth, expYear: card.expYear, securityCode: card.securityCode, holder: card.holder })
-        },
-        // EN field names uppercase holder, SHA-256
-        {
-          label: 'en-upper-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ number: card.number, expMonth: card.expMonth, expYear: card.expYear, securityCode: card.securityCode, holder: card.holder.toUpperCase() })
-        },
-        // PT-BR com anoExpiracao 4 dígitos, SHA-1
-        {
-          label: 'pt4d-sha1',
-          hash: 'sha1',
-          payload: JSON.stringify({ numero: card.number, mesExpiracao: card.expMonth, anoExpiracao: card.expYear, codigoSeguranca: card.securityCode, nomeTitular: card.holder.toUpperCase() })
-        },
-        // PT-BR com anoExpiracao 2 dígitos, SHA-1
-        {
-          label: 'pt2d-sha1',
-          hash: 'sha1',
-          payload: JSON.stringify({ numero: card.number, mesExpiracao: card.expMonth, anoExpiracao: '26', codigoSeguranca: card.securityCode, nomeTitular: card.holder.toUpperCase() })
-        },
-        // EN SHA-1
-        {
-          label: 'en-sha1',
-          hash: 'sha1',
-          payload: JSON.stringify({ number: card.number, expMonth: card.expMonth, expYear: card.expYear, securityCode: card.securityCode, holder: card.holder })
-        },
-        // Formato camelCase alternativo, SHA-256
-        {
-          label: 'camel-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ cardNumber: card.number, cardExpMonth: card.expMonth, cardExpYear: card.expYear, cardCvv: card.securityCode, cardHolder: card.holder })
-        },
-        // Formato com exp como string MM/YYYY, SHA-256
-        {
-          label: 'mmyyyy-sha256',
-          hash: 'sha256',
-          payload: JSON.stringify({ numero: card.number, expiracao: `${card.expMonth}/${card.expYear}`, codigoSeguranca: card.securityCode, nomeTitular: card.holder.toUpperCase() })
-        },
+      // Cartões de teste do sandbox PagBank (fonte: docs oficiais)
+      const testCards = [
+        { label: 'visa-approved',        number: '4539620659922097', cvv: '123', expMonth: '12', expYear: '2026', holder: 'Jose da Silva' },
+        { label: 'mastercard-approved',  number: '5240082975622454', cvv: '123', expMonth: '12', expYear: '2026', holder: 'Jose da Silva' },
+        { label: 'elo-approved',         number: '4389350446134811', cvv: '123', expMonth: '12', expYear: '2026', holder: 'Jose da Silva' },
+        { label: 'visa-4111',            number: '4111111111111111', cvv: '123', expMonth: '12', expYear: '2026', holder: 'Jose da Silva' },
       ];
 
       const results = [];
-      for (const v of variants) {
+      for (const c of testCards) {
         try {
-          const encrypted = rsaEncrypt(pem, v.payload, v.hash);
-          const result = await createCardOrder(encrypted, v.label);
+          const { encrypted, payload } = encryptCard(pem, c.number, c.cvv, c.expMonth, c.expYear, c.holder);
+          const result = await createCardOrder(encrypted, c.label);
           results.push({
-            label: v.label,
-            hash: v.hash,
-            payload_preview: v.payload.slice(0, 80),
+            label: c.label,
+            payload_used: payload,
             http_status: result.status,
             charge_status: result.response?.charges?.[0]?.status,
             error: result.response?.error_messages || result.response?.title || null,
             order_id: result.response?.id || null,
             raw_response: result.response
           });
-          // Se deu 201, parar e retornar esse resultado como principal
           if (result.status === 201) {
             return res.status(200).json({
               success: true,
-              winning_variant: v.label,
-              winning_payload: v.payload,
-              winning_hash: v.hash,
+              winning_card: c.label,
+              payload_used: payload,
               result: result,
               all_results: results
             });
           }
         } catch (encErr) {
-          results.push({ label: v.label, hash: v.hash, error: encErr.message });
+          results.push({ label: c.label, error: encErr.message });
         }
-        // Pequena pausa para não sobrecarregar a API sandbox
         await new Promise(r => setTimeout(r, 300));
       }
 
       return res.status(200).json({
         success: false,
-        message: 'Nenhum formato funcionou. Ver all_results para detalhes.',
+        message: 'Nenhum cartão funcionou. Ver all_results para detalhes.',
         public_key_snippet: public_key.slice(0, 40) + '...',
         all_results: results
       });
