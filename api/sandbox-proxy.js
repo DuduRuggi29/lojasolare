@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         },
         items: [{ reference_id: 'solare-luminaria', name: 'Luminaria Solar Solare Kit 2 unidades', quantity: 1, unit_amount: 7890 }],
         shipping: { address: { street: 'Rua das Flores', number: '100', complement: 'apto 1', locality: 'Centro', city: 'Sao Paulo', region_code: 'SP', country: 'BRA', postal_code: '01310100' } },
-        qr_codes: [{ amount: { value: 7890 }, expiration_date: '2026-12-31T23:59:00-03:00' }],
+        qr_codes: [{ amount: { value: 7890 }, expiration_date: '2026-04-23T23:59:00-03:00' }],
         notification_urls: ['https://lojassolare.com.br/api/pagbank-webhook']
       };
       const r = await fetch(`${SANDBOX_BASE}/orders`, {
