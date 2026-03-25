@@ -5,154 +5,95 @@
 <title>Teste Sandbox PagBank — Lojas Solare</title>
 <script src="https://assets.pagseguro.com.br/checkout-sdk/npm/release/4.3.28/browser/pag-seguro.min.js"></script>
 <style>
-  body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
-  button { background: #0f0; color: #000; border: none; padding: 12px 24px; font-size: 16px; cursor: pointer; font-weight: bold; margin: 10px 5px; }
-  #log { white-space: pre-wrap; background: #000; border: 1px solid #0f0; padding: 15px; margin-top: 15px; min-height: 200px; }
-  .ok { color: #0f0; } .err { color: #f44; } .info { color: #ff0; }
+  body{font-family:monospace;background:#111;color:#0f0;padding:20px;max-width:900px}
+  button{background:#0f0;color:#000;border:none;padding:12px 24px;font-size:15px;cursor:pointer;font-weight:bold;margin:6px 4px;border-radius:4px}
+  button:disabled{background:#555;color:#999;cursor:not-allowed}
+  #log{white-space:pre-wrap;background:#000;border:1px solid #0f0;padding:15px;margin-top:15px;min-height:150px;font-size:13px;max-height:80vh;overflow-y:auto}
+  .ok{color:#0f0}.err{color:#f44}.info{color:#ff0}.dim{color:#888}
 </style>
 </head>
 <body>
 <h2>🧪 Teste Sandbox PagBank — Lojas Solare</h2>
-<button onclick="runPix()">▶ Testar PIX</button>
-<button onclick="runCard()">▶ Testar CARTÃO</button>
+<button id="btnPix" onclick="runPix()">▶ Testar PIX</button>
+<button id="btnCard" onclick="runCard()">▶ Testar CARTÃO</button>
 <button onclick="copyLog()">📋 Copiar Log</button>
-<div id="log">Aguardando...</div>
+<button onclick="document.getElementById('log').innerHTML=''">🗑 Limpar</button>
+<div id="log">Clique em um dos botões acima...</div>
 
 <script>
-const TOKEN = '1f05cb45-5c02-4934-8a69-9f0e0dc898841edcb547422c965123032b00fc70c0d27690-9146-43e1-b2d1-c0199aeacc81';
-const BASE  = 'https://sandbox.api.pagseguro.com';
-
+const PROXY = '/api/sandbox-proxy';
 const log = document.getElementById('log');
-function write(msg, cls='') {
-  const ts = new Date().toLocaleTimeString('pt-BR');
-  log.innerHTML += `<span class="${cls}">[${ts}] ${msg}\n</span>`;
-  log.scrollTop = log.scrollHeight;
-}
 
-function logJSON(label, obj) {
-  write('--- ' + label + ' ---', 'info');
-  write(JSON.stringify(obj, null, 2));
-}
+function ts() { return new Date().toLocaleTimeString('pt-BR'); }
+function w(msg, cls='') { log.innerHTML += `<span class="${cls}">[${ts()}] ${msg}\n</span>`; log.scrollTop=1e9; }
+function wj(label, obj) { w('─── '+label+' ───','info'); w(JSON.stringify(obj,null,2)); }
 
 async function runPix() {
   log.innerHTML = '';
-  write('=== TESTE PIX ===', 'ok');
-
-  const body = {
-    reference_id: 'solare-pix-' + Date.now(),
-    customer: {
-      name: 'Jose da Silva', email: 'jose@email.com', tax_id: '12345678909',
-      phones: [{ country: '55', area: '11', number: '999999999', type: 'MOBILE' }]
-    },
-    items: [{ reference_id: 'solare-luminaria', name: 'Luminaria Solar Solare Kit 2 unidades', quantity: 1, unit_amount: 7890 }],
-    shipping: { address: { street: 'Rua das Flores', number: '100', complement: 'apto 1', locality: 'Centro', city: 'Sao Paulo', region_code: 'SP', country: 'BRA', postal_code: '01310100' } },
-    qr_codes: [{ amount: { value: 7890 }, expiration_date: '2026-12-31T23:59:00-03:00' }],
-    notification_urls: ['https://lojassolare.com.br/api/pagbank-webhook']
-  };
-
-  logJSON('REQUEST — POST ' + BASE + '/orders', body);
-
+  document.getElementById('btnPix').disabled = true;
+  w('=== TESTE 1: PIX ===','ok');
+  w('Enviando para proxy backend...','dim');
   try {
-    const r = await fetch(BASE + '/orders', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await r.json();
-    write('HTTP: ' + r.status, r.ok ? 'ok' : 'err');
-    logJSON('RESPONSE', data);
-    if (r.ok) write('✅ PIX OK — ID: ' + data.id, 'ok');
-    else write('❌ PIX FALHOU', 'err');
-  } catch(e) {
-    write('❌ Erro: ' + e.message, 'err');
-  }
+    const r = await fetch(PROXY+'?action=pix');
+    const d = await r.json();
+    w('HTTP Status: '+d._status, d._status===201?'ok':'err');
+    wj('REQUEST — POST https://sandbox.api.pagseguro.com/orders', d._request);
+    wj('RESPONSE (HTTP '+d._status+')', d._response);
+    if (d._status===201) w('✅ PIX OK — Pedido: '+d._response.id,'ok');
+    else w('❌ PIX FALHOU','err');
+  } catch(e) { w('❌ '+e.message,'err'); }
+  document.getElementById('btnPix').disabled = false;
 }
 
 async function runCard() {
   log.innerHTML = '';
-  write('=== TESTE CARTÃO ===', 'ok');
+  document.getElementById('btnCard').disabled = true;
+  w('=== TESTE 2: CARTÃO DE CRÉDITO ===','ok');
 
-  // 1. Buscar chave pública
-  write('Buscando chave pública...', 'info');
+  // Etapa 1: buscar chave pública via proxy
+  w('Etapa 1/3 — Buscando chave pública...','dim');
   let publicKey;
   try {
-    const pkRes = await fetch(BASE + '/public-keys/card', {
-      headers: { 'Authorization': 'Bearer ' + TOKEN }
-    });
+    const pkRes = await fetch(PROXY+'?action=public-key');
     const pkData = await pkRes.json();
-    logJSON('GET /public-keys/card — HTTP ' + pkRes.status, pkData);
+    wj('GET /public-keys/card — HTTP '+pkRes.status, pkData);
     publicKey = pkData.public_key;
-  } catch(e) {
-    write('❌ Erro ao buscar chave pública: ' + e.message, 'err');
-    return;
-  }
+    w('✅ Chave pública obtida','ok');
+  } catch(e) { w('❌ Erro chave pública: '+e.message,'err'); document.getElementById('btnCard').disabled=false; return; }
 
-  // 2. Criptografar cartão com SDK oficial
-  write('Criptografando cartão com PagSeguro.encryptCard()...', 'info');
+  // Etapa 2: criptografar cartão no browser com SDK PagBank
+  w('Etapa 2/3 — Criptografando cartão com PagSeguro.encryptCard()...','dim');
   if (typeof PagSeguro === 'undefined') {
-    write('❌ SDK do PagBank não carregado! Verifique sua conexão e tente novamente.', 'err');
-    return;
+    w('❌ SDK PagBank não carregado. Verifique sua conexão com a internet.','err');
+    document.getElementById('btnCard').disabled = false; return;
   }
+  const enc = PagSeguro.encryptCard({ publicKey, holder:'Jose da Silva', number:'4111111111111111', expMonth:'12', expYear:'2026', securityCode:'123' });
+  if (!enc.encryptedCard) { w('❌ Erro SDK: '+JSON.stringify(enc.errors),'err'); document.getElementById('btnCard').disabled=false; return; }
+  w('✅ Cartão criptografado com SDK oficial PagBank','ok');
 
-  const encResult = PagSeguro.encryptCard({
-    publicKey: publicKey,
-    holder: 'Jose da Silva',
-    number: '4111111111111111',
-    expMonth: '12',
-    expYear: '2026',
-    securityCode: '123'
-  });
-
-  if (!encResult.encryptedCard || (encResult.errors && encResult.errors.length > 0)) {
-    write('❌ Erro na criptografia: ' + JSON.stringify(encResult.errors), 'err');
-    return;
-  }
-
-  write('✅ Cartão criptografado com sucesso', 'ok');
-  write('encrypted (primeiros 40 chars): ' + encResult.encryptedCard.slice(0,40) + '...', 'info');
-
-  // 3. Criar pedido com cartão
-  const cardBody = {
-    reference_id: 'solare-card-' + Date.now(),
-    customer: {
-      name: 'Jose da Silva', email: 'jose@email.com', tax_id: '12345678909',
-      phones: [{ country: '55', area: '11', number: '999999999', type: 'MOBILE' }]
-    },
-    items: [{ reference_id: 'solare-luminaria', name: 'Luminaria Solar Solare Kit 2 unidades', quantity: 1, unit_amount: 7890 }],
-    shipping: { address: { street: 'Rua das Flores', number: '100', complement: 'apto 1', locality: 'Centro', city: 'Sao Paulo', region_code: 'SP', country: 'BRA', postal_code: '01310100' } },
-    charges: [{
-      reference_id: 'solare-charge-' + Date.now(),
-      description: 'Luminaria Solar Solare Kit 2 unidades',
-      amount: { value: 7890, currency: 'BRL' },
-      payment_method: {
-        type: 'CREDIT_CARD', installments: 1, capture: true,
-        card: { encrypted: encResult.encryptedCard, store: true },
-        holder: { name: 'Jose da Silva', tax_id: '12345678909' }
-      }
-    }],
-    notification_urls: ['https://lojassolare.com.br/api/pagbank-webhook']
-  };
-
-  logJSON('REQUEST — POST ' + BASE + '/orders', cardBody);
-
+  // Etapa 3: criar pedido via proxy
+  w('Etapa 3/3 — Criando pedido com cartão...','dim');
   try {
-    const r = await fetch(BASE + '/orders', {
+    const r = await fetch(PROXY+'?action=card', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify(cardBody)
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ encrypted: enc.encryptedCard })
     });
-    const data = await r.json();
-    write('HTTP: ' + r.status, r.ok ? 'ok' : 'err');
-    logJSON('RESPONSE', data);
-    if (r.ok) write('✅ CARTÃO OK — ChargeStatus: ' + data.charges?.[0]?.status, 'ok');
-    else write('❌ CARTÃO FALHOU', 'err');
-  } catch(e) {
-    write('❌ Erro: ' + e.message, 'err');
-  }
+    const d = await r.json();
+    w('HTTP Status: '+d._status, d._status===201?'ok':'err');
+    wj('REQUEST — POST https://sandbox.api.pagseguro.com/orders', d._request);
+    wj('RESPONSE (HTTP '+d._status+')', d._response);
+    if (d._status===201) w('✅ CARTÃO OK — Status: '+d._response.charges?.[0]?.status,'ok');
+    else w('❌ CARTÃO FALHOU: '+(d._response.error_messages?.[0]?.description||JSON.stringify(d._response)),'err');
+  } catch(e) { w('❌ '+e.message,'err'); }
+  document.getElementById('btnCard').disabled = false;
 }
 
 function copyLog() {
-  navigator.clipboard.writeText(log.innerText).then(() => alert('Log copiado!'));
+  const txt = log.innerText;
+  navigator.clipboard.writeText(txt).then(()=>alert('✅ Log copiado!\nCole aqui para enviar ao Claude.')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('✅ Copiado!');
+  });
 }
 </script>
 </body>
