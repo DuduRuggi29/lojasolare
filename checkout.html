@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Finalizar Compra — Solare</title>
-    <script src="https://assets.pagseguro.com.br/checkout-sdk/npm/release/4.3.28/browser/pag-seguro.min.js"></script>
+    <!-- JSEncrypt: mesma lib usada internamente pelo SDK PagBank -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1399,21 +1400,21 @@
             const pkData = await pkRes.json();
             if (!pkData.public_key) throw new Error('Public key not available');
 
-            // Encrypt card with PagBank SDK
-            const encrypted = PagSeguro.encryptCard({
-                publicKey:    pkData.public_key,
-                holder:       holder.toUpperCase(),
-                number:       number,
-                expMonth:     expMonth,
-                expYear:      '20' + expYear,
-                securityCode: cvv,
-            });
-
-            if (encrypted.hasErrors) {
-                console.error('PagBank encryption errors:', encrypted.errors);
+            // Encrypt card using JSEncrypt (PKCS#1 v1.5) — mesmo formato do SDK PagBank
+            // Payload: "{numero};{cvv};{mes};{ano};{titular};{timestamp_ms}"
+            const fullYear = expYear.length === 2 ? '20' + expYear : expYear;
+            const cardPayload = `${number};${cvv};${expMonth};${fullYear};${holder.toUpperCase()};${Date.now()}`;
+            const jsEncrypt = new JSEncrypt();
+            const pemKey = '-----BEGIN PUBLIC KEY-----\n' +
+                pkData.public_key.match(/.{1,64}/g).join('\n') +
+                '\n-----END PUBLIC KEY-----';
+            jsEncrypt.setPublicKey(pemKey);
+            const encryptedCard = jsEncrypt.encrypt(cardPayload);
+            if (!encryptedCard) {
                 alert('Dados do cartão inválidos. Verifique e tente novamente.');
                 return;
             }
+            const encrypted = { encryptedCard };
 
             const res = await fetch('/api/process-payment', {
                 method: 'POST',
