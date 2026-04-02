@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     // ── Validação ──────────────────────────────────────────
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const cpfDigits  = String(customerCpf || '').replace(/\D/g, '');
-    const parsedTotal = parseFloat(totalPrice);
+    const parsedTotal = Math.round(parseFloat(totalPrice) * 100) / 100;
     const parsedQty   = parseInt(quantity);
 
     if (!customerName || String(customerName).trim().split(/\s+/).length < 2)
