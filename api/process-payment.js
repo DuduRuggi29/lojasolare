@@ -154,8 +154,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── Meta CAPI + Notificação para cartão aprovado ──────
-    if (paymentStatus === 'approved') {
+    // ── Meta CAPI: Pix → dispara na geração; Cartão → dispara na aprovação ──
+    if (isPix || paymentStatus === 'approved') {
       sendMetaEvent({
         eventName:      'Purchase',
         eventSourceUrl: 'https://lojassolare.com.br/obrigado.html',

@@ -60,29 +60,6 @@ export default async function handler(req, res) {
           shippingMethod: order.shipping_method,
           orderId:       order.id,
         }).catch(e => console.error('Email notification failed:', e));
-
-        sendMetaEvent({
-          eventName:      'Purchase',
-          eventSourceUrl: 'https://lojassolare.com.br/obrigado.html',
-          userData: {
-            email:     order.customer_email,
-            phone:     order.customer_phone,
-            firstName: nameParts[0],
-            lastName:  nameParts.slice(1).join(' ') || nameParts[0],
-            cpf:   order.customer_cpf,
-            city:  addr.city,
-            state: addr.state,
-            zip:   addr.cep,
-          },
-          customData: {
-            value:        parseFloat(order.total_price) || 0,
-            currency:     'BRL',
-            content_ids:  ['solare-luminaria'],
-            content_type: 'product',
-            num_items:    order.product_quantity || 1,
-          },
-          eventId: `purchase-${payment_id}`,
-        }).catch(e => console.error('Meta CAPI failed:', e));
       }
 
       return res.status(200).json({ status: 'approved' });
