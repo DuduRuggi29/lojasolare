@@ -176,7 +176,9 @@
         document.getElementById('status-title').innerText = 'Aguardando Pagamento';
         document.getElementById('status-desc').innerText = 'Para finalizar, pague o Pix abaixo:';
         document.getElementById('pix-area').style.display = 'block';
-        document.getElementById('qr-img').src = pixImg; // PagBank returns a PNG URL
+        document.getElementById('qr-img').src = pixImg
+            ? (pixImg.startsWith('data:') ? pixImg : 'data:image/png;base64,' + pixImg)
+            : '';
         document.getElementById('pix-code').innerText = pixCode;
 
         // Iniciar polling para Pix
