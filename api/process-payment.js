@@ -7,8 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const PAGBANK_TOKEN = process.env.PAGBANK_TOKEN;
-const PAGBANK_BASE  = 'https://api.pagseguro.com';
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+const MP_BASE = 'https://api.mercadopago.com';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -25,8 +25,8 @@ export default async function handler(req, res) {
       lightColor,
       totalPrice,
       paymentMethodId,
-      cardEncrypted,
-      cardHolder,
+      cardToken,
+      cardPaymentMethodId,
       installments,
       shippingMethod,
       shippingPrice,
@@ -54,98 +54,65 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Método de pagamento inválido.' });
 
     const isPix = paymentMethodId === 'pix';
-    const amountCents = Math.round(parsedTotal * 100);
-    const refId = `order-${Date.now()}`;
-
     const nameParts = customerName.trim().split(/\s+/);
     const firstName  = nameParts[0];
     const lastName   = nameParts.slice(1).join(' ') || firstName;
 
-    const phoneDigits = String(customerPhone || '').replace(/\D/g, '');
-
-    // ── Montar pedido PagBank ──────────────────────────────
-    const orderBody = {
-      reference_id: refId,
-      customer: {
-        name:   customerName.trim(),
-        email:  customerEmail.trim().toLowerCase(),
-        tax_id: cpfDigits,
-        ...(phoneDigits.length >= 10 && {
-          phones: [{
-            country: '55',
-            area:    phoneDigits.slice(0, 2),
-            number:  phoneDigits.slice(2),
-            type:    'MOBILE',
-          }],
-        }),
+    // ── Montar pagamento Mercado Pago ──────────────────────
+    const paymentBody = {
+      transaction_amount: parsedTotal,
+      description: `Luminária Solar Solare — Kit ${quantity} unidades`,
+      payer: {
+        email:      customerEmail.trim().toLowerCase(),
+        first_name: firstName,
+        last_name:  lastName,
+        identification: {
+          type:   'CPF',
+          number: cpfDigits,
+        },
       },
-      items: [{
-        reference_id: 'solare-luminaria',
-        name:         `Luminária Solar Solare — Kit ${quantity} unidades`,
-        quantity:     1,
-        unit_amount:  amountCents,
-      }],
-      notification_urls: [`${process.env.SITE_URL}/api/pagbank-webhook`],
     };
 
     if (isPix) {
-      // Expira em 30 minutos
-      const expiration = new Date(Date.now() + 30 * 60 * 1000)
-        .toISOString()
-        .replace(/\.\d{3}Z$/, '-03:00');
-      orderBody.qr_codes = [{
-        amount:          { value: amountCents },
-        expiration_date: expiration,
-      }];
+      paymentBody.payment_method_id = 'pix';
+      paymentBody.date_of_expiration = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     } else {
-      orderBody.charges = [{
-        reference_id: `${refId}-charge`,
-        description:  `Luminária Solar Solare — Kit ${quantity} unidades`,
-        amount:        { value: amountCents, currency: 'BRL' },
-        payment_method: {
-          type:         'CREDIT_CARD',
-          installments: parseInt(installments) || 1,
-          capture:      true,
-          card: {
-            encrypted: cardEncrypted,
-            holder:    { name: (cardHolder || customerName).trim() },
-            store:     false,
-          },
-        },
-      }];
+      paymentBody.token              = cardToken;
+      paymentBody.payment_method_id  = cardPaymentMethodId || 'visa';
+      paymentBody.installments       = parseInt(installments) || 1;
+      paymentBody.capture            = true;
     }
 
-    // ── Chamar API PagBank ────────────────────────────────
-    const pbResponse = await fetch(`${PAGBANK_BASE}/orders`, {
+    // ── Chamar API Mercado Pago ────────────────────────────
+    const mpResponse = await fetch(`${MP_BASE}/v1/payments`, {
       method:  'POST',
       headers: {
-        'Authorization': `Bearer ${PAGBANK_TOKEN}`,
-        'Content-Type':  'application/json',
-        'Accept':        'application/json',
+        'Authorization':    `Bearer ${MP_ACCESS_TOKEN}`,
+        'Content-Type':     'application/json',
+        'X-Idempotency-Key': `solare-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       },
-      body: JSON.stringify(orderBody),
+      body: JSON.stringify(paymentBody),
     });
 
-    const pbResult = await pbResponse.json();
+    const mpResult = await mpResponse.json();
 
-    if (!pbResponse.ok) {
-      console.error('[PagBank Error]', JSON.stringify(pbResult));
-      const errMsg = pbResult?.error_messages?.[0]?.description
-        || pbResult?.message
+    if (!mpResponse.ok) {
+      console.error('[MP Error]', JSON.stringify(mpResult));
+      const errMsg = mpResult?.message
+        || mpResult?.cause?.[0]?.description
         || 'Erro no processamento.';
-      return res.status(400).json({ error: errMsg, details: pbResult });
+      return res.status(400).json({ error: errMsg, details: mpResult });
     }
 
     // ── Determinar status ──────────────────────────────────
-    let paymentStatus = 'pending';
-    let pbPaymentId   = pbResult.id;
-
-    if (!isPix) {
-      const chargeStatus = pbResult.charges?.[0]?.status;
-      if (chargeStatus === 'PAID')     paymentStatus = 'approved';
-      else if (chargeStatus === 'DECLINED') paymentStatus = 'rejected';
-      pbPaymentId = pbResult.charges?.[0]?.id || pbResult.id;
-    }
+    const statusMap = {
+      approved:   'approved',
+      rejected:   'rejected',
+      pending:    'pending',
+      in_process: 'pending',
+      cancelled:  'cancelled',
+    };
+    const paymentStatus = statusMap[mpResult.status] || 'pending';
 
     // ── Salvar no Supabase ────────────────────────────────
     const orderData = {
@@ -158,16 +125,16 @@ export default async function handler(req, res) {
       product_light_color: lightColor,
       total_price:         totalPrice,
       payment_method:      paymentMethodId,
-      mp_payment_id:       String(pbPaymentId),
+      mp_payment_id:       String(mpResult.id),
       status:              paymentStatus,
       shipping_method:     shippingMethod,
       shipping_price:      shippingPrice,
     };
 
     if (isPix) {
-      const qrCode = pbResult.qr_codes?.[0];
-      orderData.pix_qr_code        = qrCode?.text ?? null;
-      orderData.pix_qr_code_base64 = qrCode?.links?.find(l => l.rel === 'QRCODE.PNG')?.href ?? null;
+      const txData = mpResult.point_of_interaction?.transaction_data;
+      orderData.pix_qr_code        = txData?.qr_code        ?? null;
+      orderData.pix_qr_code_base64 = txData?.qr_code_base64 ?? null;
     }
 
     const { data: order, error: dbError } = await supabase
@@ -180,7 +147,7 @@ export default async function handler(req, res) {
 
     // ── Reminder Pix (2 min) ──────────────────────────────
     if (isPix) {
-      const pixCode = pbResult.qr_codes?.[0]?.text;
+      const pixCode = mpResult.point_of_interaction?.transaction_data?.qr_code;
       if (pixCode) {
         schedulePixReminder({ customerName, customerEmail, pixCode })
           .catch(e => console.error('Pix reminder failed (non-fatal):', e));
@@ -196,7 +163,7 @@ export default async function handler(req, res) {
           email:     customerEmail,
           phone:     customerPhone,
           firstName, lastName,
-          cpf:  customerCpf,
+          cpf:   customerCpf,
           city:  customerAddress?.city,
           state: customerAddress?.state,
           zip:   customerAddress?.cep,
@@ -208,23 +175,23 @@ export default async function handler(req, res) {
           content_type: 'product',
           num_items:    quantity,
         },
-        eventId: `purchase-${pbPaymentId}`,
+        eventId: `purchase-${mpResult.id}`,
       }).catch(e => console.error('Meta CAPI failed (non-fatal):', e));
 
       await notifyPaymentApproved({
         customerName, customerEmail, customerPhone,
         totalPrice, shippingMethod,
-        orderId: order?.id || pbPaymentId,
+        orderId: order?.id || mpResult.id,
       });
     }
 
     return res.status(200).json({
-      success:       true,
-      status:        paymentStatus,
-      id:            pbPaymentId,
-      orderId:       order?.id || null,
-      qr_code:       isPix ? (pbResult.qr_codes?.[0]?.text ?? null) : null,
-      qr_code_base64: isPix ? (pbResult.qr_codes?.[0]?.links?.find(l => l.rel === 'QRCODE.PNG')?.href ?? null) : null,
+      success:        true,
+      status:         paymentStatus,
+      id:             mpResult.id,
+      orderId:        order?.id || null,
+      qr_code:        isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code        ?? null) : null,
+      qr_code_base64: isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null) : null,
     });
 
   } catch (err) {
