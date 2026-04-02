@@ -149,6 +149,7 @@
     const pixCode = params.get('qr_code');
     const pixImg = params.get('qr_code_base64');
     const paymentId = params.get('id');
+    const reminderId = params.get('reminder_id') || '';
     const isUpsell = params.get('upsell') === 'true';
     const orderTotal = parseFloat(params.get('total') || '0');
 
@@ -227,7 +228,8 @@
     async function startPixPolling(id) {
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`/api/check-payment-status?payment_id=${id}`);
+                const reminderParam = reminderId ? `&reminder_id=${encodeURIComponent(reminderId)}` : '';
+                const res = await fetch(`/api/check-payment-status?payment_id=${id}${reminderParam}`);
                 const data = await res.json();
 
                 if (data.status === 'approved') {

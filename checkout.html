@@ -1523,7 +1523,8 @@
             const result = await res.json();
             if (res.ok && result.qr_code) {
                 const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
-                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}`;
+                const reminderParam = result.pix_reminder_id ? `&reminder_id=${encodeURIComponent(result.pix_reminder_id)}` : '';
+                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}${reminderParam}`;
             } else {
                 const cause = result.error || 'Erro desconhecido';
                 console.error('Pix error:', result);

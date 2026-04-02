@@ -145,12 +145,13 @@ export default async function handler(req, res) {
 
     if (dbError) console.error('Supabase Error:', dbError);
 
-    // ── Reminder Pix (2 min) ──────────────────────────────
+    // ── Reminder Pix (20 min, cancelável) ────────────────
+    let pixReminderId = null;
     if (isPix) {
       const pixCode = mpResult.point_of_interaction?.transaction_data?.qr_code;
       if (pixCode) {
-        schedulePixReminder({ customerName, customerEmail, pixCode })
-          .catch(e => console.error('Pix reminder failed (non-fatal):', e));
+        pixReminderId = await schedulePixReminder({ customerName, customerEmail, pixCode })
+          .catch(e => { console.error('Pix reminder failed (non-fatal):', e); return null; });
       }
     }
 
@@ -186,12 +187,13 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      success:        true,
-      status:         paymentStatus,
-      id:             mpResult.id,
-      orderId:        order?.id || null,
-      qr_code:        isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code        ?? null) : null,
-      qr_code_base64: isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null) : null,
+      success:         true,
+      status:          paymentStatus,
+      id:              mpResult.id,
+      orderId:         order?.id || null,
+      qr_code:         isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code        ?? null) : null,
+      qr_code_base64:  isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null) : null,
+      pix_reminder_id: pixReminderId || null,
     });
 
   } catch (err) {

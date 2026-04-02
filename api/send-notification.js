@@ -289,10 +289,10 @@ function pixReminderEmailHTML({ customerName, pixCode }) {
 export async function schedulePixReminder({ customerName, customerEmail, pixCode }) {
   if (!RESEND_API_KEY) {
     console.warn('[Notifications] RESEND_API_KEY not set, skipping Pix reminder schedule.');
-    return;
+    return null;
   }
 
-  const twoMinutesLater = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+  const delay = new Date(Date.now() + 20 * 60 * 1000).toISOString(); // 20 minutos
   const subject = `⏳ Você esqueceu de pagar seu Pix — Solare`;
   const html = pixReminderEmailHTML({ customerName, pixCode });
 
@@ -308,17 +308,32 @@ export async function schedulePixReminder({ customerName, customerEmail, pixCode
         to: customerEmail,
         subject,
         html,
-        scheduled_at: twoMinutesLater,
+        scheduled_at: delay,
       }),
     });
 
     const data = await res.json();
     if (!res.ok) {
       console.error('[Resend] Pix reminder schedule error:', JSON.stringify(data));
-    } else {
-      console.log('[Resend] Pix reminder scheduled for', twoMinutesLater, '— id:', data.id);
+      return null;
     }
+    console.log('[Resend] Pix reminder scheduled — id:', data.id);
+    return data.id; // retorna o ID para cancelamento posterior
   } catch (e) {
     console.error('[Resend] Pix reminder schedule exception:', e.message);
+    return null;
+  }
+}
+
+export async function cancelPixReminder(reminderId) {
+  if (!RESEND_API_KEY || !reminderId) return;
+  try {
+    await fetch(`https://api.resend.com/emails/${reminderId}/cancel`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}` },
+    });
+    console.log('[Resend] Pix reminder cancelled — id:', reminderId);
+  } catch (e) {
+    console.error('[Resend] Cancel reminder failed:', e.message);
   }
 }

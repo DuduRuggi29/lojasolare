@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved } from './send-notification.js';
+import { notifyPaymentApproved, cancelPixReminder } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
 
 const supabase = createClient(
@@ -10,7 +10,7 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
 
-  const { payment_id } = req.query;
+  const { payment_id, reminder_id } = req.query;
   if (!payment_id) return res.status(400).json({ error: 'Missing payment_id' });
   if (!/^[\w-]{1,64}$/.test(String(payment_id))) {
     return res.status(400).json({ error: 'Invalid payment_id' });
@@ -51,6 +51,9 @@ export default async function handler(req, res) {
       if (order) {
         const nameParts = (order.customer_name || '').trim().split(/\s+/);
         const addr = order.customer_address || {};
+
+        // Cancelar email de lembrete se a pessoa pagou antes dos 20 min
+        if (reminder_id) cancelPixReminder(reminder_id).catch(() => {});
 
         notifyPaymentApproved({
           customerName:  order.customer_name,
