@@ -292,7 +292,7 @@ export async function schedulePixReminder({ customerName, customerEmail, pixCode
     return null;
   }
 
-  const delay = new Date(Date.now() + 20 * 60 * 1000).toISOString(); // 20 minutos
+  const delay = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // 2 minutos
   const subject = `⏳ Você esqueceu de pagar seu Pix — Solare`;
   const html = pixReminderEmailHTML({ customerName, pixCode });
 
