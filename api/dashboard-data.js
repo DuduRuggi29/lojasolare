@@ -128,7 +128,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error('Dashboard error:', err);
-    return res.status(500).json({ error: 'Erro interno.' });
+    console.error('Dashboard error:', JSON.stringify(err), err?.message, err?.stack);
+    return res.status(500).json({ error: 'Erro interno.', detail: err?.message || String(err) });
   }
 }
