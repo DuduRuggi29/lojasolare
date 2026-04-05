@@ -51,23 +51,21 @@ function selectVariant(element, type) {
 }
 
 // Current globally selected price for dropdown use
-// Defaults match the active card on page load (2 unidades)
+// Defaults match the active kit on page load (Pague 1 Leve 2)
 let currentSelectedPrice = 78.90;
 let currentSelectedQty = 2;
 let currentSelectedOldPrice = 129.90;
 let currentSelectedLight = 'warm';
 
+// Kit selection state
+let currentKitBaseQty = 2;
+let currentKitBasePrice = 78.90;
+let currentKitBaseOldPrice = 129.90;
+let currentKitMultiplier = 1;
+
 // Wire "Comprar Agora" button to checkout page
 // Reads directly from the active DOM elements to avoid stale state
 window.handleCheckout = function() {
-    // Read qty/price from active card data attributes (source of truth)
-    const activeCard = document.querySelector('.qty-card.active');
-    if (activeCard && activeCard.dataset.qty) {
-        currentSelectedQty   = parseInt(activeCard.dataset.qty);
-        currentSelectedPrice = parseFloat(activeCard.dataset.price);
-        currentSelectedOldPrice = parseFloat(activeCard.dataset.oldPrice);
-    }
-
     // Read light from active variant button
     const activeLight = document.querySelector('.variant-btn.active[data-value]');
     if (activeLight) {
@@ -134,6 +132,61 @@ window.updatePricing = function(qty, price, oldPrice, element) {
     const dropdown = document.getElementById('installments-dropdown');
     if (dropdown && dropdown.classList.contains('active')) {
         generateInstallmentTable(price);
+    }
+}
+
+// Kit Selection Logic
+window.selectKit = function(kitQty, kitPrice, kitOldPrice, element) {
+    currentKitBaseQty = kitQty;
+    currentKitBasePrice = kitPrice;
+    currentKitBaseOldPrice = kitOldPrice;
+    currentKitMultiplier = 1;
+    const display = document.getElementById('kit-qty-display');
+    if (display) display.textContent = '1';
+    document.querySelectorAll('.qty-card').forEach(card => card.classList.remove('active'));
+    if (element) element.classList.add('active');
+    applyKitPricing();
+};
+
+window.changeKitQty = function(delta) {
+    const next = currentKitMultiplier + delta;
+    if (next < 1) return;
+    currentKitMultiplier = next;
+    const display = document.getElementById('kit-qty-display');
+    if (display) display.textContent = currentKitMultiplier;
+    applyKitPricing();
+};
+
+function applyKitPricing() {
+    const totalQty = currentKitBaseQty * currentKitMultiplier;
+    const totalPrice = Math.round(currentKitBasePrice * currentKitMultiplier * 100) / 100;
+    const totalOldPrice = Math.round(currentKitBaseOldPrice * currentKitMultiplier * 100) / 100;
+    currentSelectedQty = totalQty;
+    currentSelectedPrice = totalPrice;
+    currentSelectedOldPrice = totalOldPrice;
+
+    const savings = totalOldPrice - totalPrice;
+    const discountPercent = Math.round((savings / totalOldPrice) * 100);
+
+    const priceDisplay = document.getElementById('display-price');
+    const originalDisplay = document.getElementById('original-price');
+    const instDisplay = document.getElementById('inst-price');
+    const discountBadge = document.getElementById('discount-badge');
+    const savingsBadge = document.getElementById('savings-badge');
+    const pixDisplay = document.getElementById('pix-price');
+
+    if (priceDisplay) priceDisplay.innerText = totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    if (originalDisplay) originalDisplay.innerText = totalOldPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    if (instDisplay) instDisplay.innerText = (totalPrice / 12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    if (discountBadge) discountBadge.innerText = `↓ ${discountPercent}%`;
+    if (savingsBadge) savingsBadge.innerText = `${savings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} de desconto`;
+    if (pixDisplay) {
+        const pixPrice = totalPrice * 0.95;
+        pixDisplay.innerText = pixPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    const dropdown = document.getElementById('installments-dropdown');
+    if (dropdown && dropdown.classList.contains('active')) {
+        generateInstallmentTable(totalPrice);
     }
 }
 

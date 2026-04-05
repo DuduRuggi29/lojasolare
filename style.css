@@ -858,6 +858,60 @@ nav a {
     white-space: nowrap;
 }
 
+.kit-grid {
+    grid-template-columns: 1fr 1fr;
+}
+
+.kit-qty-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 12px 15px;
+    border: 2px solid #EEE;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.kit-qty-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.kit-qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.kit-qty-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    background: white;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.kit-qty-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.kit-qty-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+
 .checkout-box {
     margin-top: 40px;
     background: var(--bg-light);

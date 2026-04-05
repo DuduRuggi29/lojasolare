@@ -185,36 +185,27 @@
                             </div>
                         </div>
 
-                        <!-- Option: Quantity -->
+                        <!-- Option: Kit -->
                         <div class="option-group">
-                            <label>Quantidade:</label>
-                            <div class="quantity-grid">
-                                <div class="qty-card" onclick="updatePricing(1, 49.90, 89.90, this)" data-qty="1" data-price="49.90" data-old-price="89.90">
-                                    <span class="qty-num">1 UNID.</span>
-                                    <span class="qty-price">R$ 49,90</span>
-                                </div>
-                                <div class="qty-card active" onclick="updatePricing(2, 78.90, 129.90, this)" data-qty="2" data-price="78.90" data-old-price="129.90">
-                                    <span class="badge-qty">ECONOMIZE 39%</span>
-                                    <span class="qty-num">2 UNID.</span>
+                            <label>Escolha seu kit:</label>
+                            <div class="quantity-grid kit-grid">
+                                <div class="qty-card active" onclick="selectKit(2, 78.90, 129.90, this)">
+                                    <span class="badge-qty">MAIS POPULAR</span>
+                                    <span class="qty-num">PAGUE 1 LEVE 2</span>
                                     <span class="qty-price">R$ 78,90</span>
                                 </div>
-                                <div class="qty-card" onclick="updatePricing(4, 108.90, 199.90, this)" data-qty="4" data-price="108.90" data-old-price="199.90">
-                                    <span class="badge-qty">MAIS POPULAR</span>
-                                    <span class="qty-num">4 UNID.</span>
-                                    <span class="qty-price">R$ 108,90</span>
-                                </div>
-                                <div class="qty-card" onclick="updatePricing(6, 167.90, 299.90, this)" data-qty="6" data-price="167.90" data-old-price="299.90">
-                                    <span class="qty-num">6 UNID.</span>
-                                    <span class="qty-price">R$ 167,90</span>
-                                </div>
-                                <div class="qty-card" onclick="updatePricing(8, 197.90, 379.90, this)" data-qty="8" data-price="197.90" data-old-price="379.90">
-                                    <span class="qty-num">8 UNID.</span>
-                                    <span class="qty-price">R$ 197,90</span>
-                                </div>
-                                <div class="qty-card" onclick="updatePricing(10, 247.90, 499.90, this)" data-qty="10" data-price="247.90" data-old-price="499.90">
+                                <div class="qty-card" onclick="selectKit(4, 107.90, 199.90, this)">
                                     <span class="badge-qty">MELHOR VALOR</span>
-                                    <span class="qty-num">10 UNID.</span>
-                                    <span class="qty-price">R$ 247,90</span>
+                                    <span class="qty-num">PAGUE 2 LEVE 4</span>
+                                    <span class="qty-price">R$ 107,90</span>
+                                </div>
+                            </div>
+                            <div class="kit-qty-row">
+                                <span class="kit-qty-label">Quantos kits?</span>
+                                <div class="kit-qty-controls">
+                                    <button class="kit-qty-btn" onclick="changeKitQty(-1)">−</button>
+                                    <span class="kit-qty-value" id="kit-qty-display">1</span>
+                                    <button class="kit-qty-btn" onclick="changeKitQty(1)">+</button>
                                 </div>
                             </div>
                         </div>
