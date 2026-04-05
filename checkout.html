@@ -439,12 +439,40 @@
             text-transform: uppercase;
             letter-spacing: 0.6px;
         }
+        .summary-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .summary-toggle #summary-chevron {
+            font-size: 11px;
+            color: var(--muted);
+            transition: transform 0.25s ease;
+        }
+        .summary-toggle.open #summary-chevron {
+            transform: rotate(180deg);
+        }
+        .summary-collapse {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+        }
+        .summary-collapse.open {
+            max-height: 200px;
+        }
+        .summary-total-fixed {
+            border-top: 1px dashed var(--border);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
         .product-line { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
         .product-line img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
         .product-info h4 { font-size: 13px; font-weight: 600; line-height: 1.3; }
         .product-info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-        .summary-rows { border-top: 1px solid var(--border); padding-top: 12px; }
+        .summary-rows { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
         .summary-row {
             display: flex;
             justify-content: space-between;
@@ -975,7 +1003,10 @@
     <!-- ORDER SUMMARY -->
     <aside class="order-summary">
         <div class="summary-card">
-            <div class="summary-card-title">Resumo do Pedido</div>
+            <div class="summary-card-title summary-toggle" onclick="toggleSummary()">
+                <span>Resumo do Pedido</span>
+                <i class="fas fa-chevron-down" id="summary-chevron"></i>
+            </div>
             <div class="product-line">
                 <img id="sum-img" src="luminaria-warm.png" alt="Luminária Solare">
                 <div class="product-info">
@@ -983,23 +1014,27 @@
                     <p id="sum-variant">1 unid. — Luz Quente</p>
                 </div>
             </div>
-            <div class="summary-rows">
-                <div class="summary-row">
-                    <span>Subtotal</span>
-                    <span id="sum-subtotal">R$ 8,00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Frete</span>
-                    <span id="sum-shipping">Grátis</span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total</span>
-                    <span id="sum-total">R$ 8,00</span>
+            <!-- Detalhes colapsáveis -->
+            <div class="summary-collapse" id="summary-details">
+                <div class="summary-rows">
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="sum-subtotal">R$ 8,00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Frete</span>
+                        <span id="sum-shipping">Grátis</span>
+                    </div>
                 </div>
                 <div class="pix-discount-pill">
                     <span><i class="fas fa-bolt" style="color:#f97316;margin-right:4px;"></i>Com Pix (5% off):</span>
                     <span id="sum-pix-total">R$ 7,60</span>
                 </div>
+            </div>
+            <!-- Total sempre visível -->
+            <div class="summary-row total summary-total-fixed">
+                <span>Total</span>
+                <span id="sum-total">R$ 8,00</span>
             </div>
             <div class="guarantee-strip">
                 <i class="fas fa-shield-alt"></i>
@@ -1106,6 +1141,15 @@
 
     updateTotalDisplay();
     document.getElementById('sum-img').src = light === 'warm' ? 'luminaria-warm.png' : 'luminaria-white.png';
+
+    // ── RESUMO COLAPSÁVEL ──────────────────────────────────
+    window.toggleSummary = function() {
+        const details = document.getElementById('summary-details');
+        const toggle = document.querySelector('.summary-toggle');
+        if (!details || !toggle) return;
+        details.classList.toggle('open');
+        toggle.classList.toggle('open');
+    };
 
     // ── INPUT MASKS ───────────────────────────────────────
     document.getElementById('cust-cpf').addEventListener('input', function() {
