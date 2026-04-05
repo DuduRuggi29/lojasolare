@@ -856,48 +856,56 @@ nav a {
     padding: 2px 8px;
     border-radius: 50px;
     white-space: nowrap;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .kit-grid {
     grid-template-columns: 1fr 1fr;
 }
 
+.kit-grid .qty-card {
+    padding-top: 22px;
+}
+
 .kit-qty-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 12px;
-    padding: 12px 15px;
-    border: 2px solid #EEE;
-    border-radius: 12px;
-    background: #fff;
+    margin-top: 16px;
+    padding: 18px 20px;
+    border: 2px solid var(--primary-color);
+    border-radius: 14px;
+    background: rgba(26, 60, 52, 0.04);
 }
 
 .kit-qty-label {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 700;
+    color: var(--primary-color);
 }
 
 .kit-qty-controls {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
 }
 
 .kit-qty-btn {
-    width: 32px;
-    height: 32px;
+    width: 42px;
+    height: 42px;
     border: 2px solid var(--primary-color);
     border-radius: 50%;
     background: white;
     color: var(--primary-color);
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: var(--transition);
+    line-height: 1;
 }
 
 .kit-qty-btn:hover {
@@ -906,10 +914,11 @@ nav a {
 }
 
 .kit-qty-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    min-width: 20px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    min-width: 28px;
     text-align: center;
+    color: var(--primary-color);
 }
 
 .checkout-box {
@@ -1391,7 +1400,8 @@ footer {
         top: -10px !important;
         width: auto !important;
         min-width: 70% !important;
-        z-index: 10 !important;
+        z-index: 1 !important;
+        pointer-events: none !important;
     }
 
     /* Pricing Section Containment */
