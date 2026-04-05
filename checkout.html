@@ -1526,7 +1526,7 @@
                 alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
             } else if (result.status === 'approved') {
                 if (typeof fbq !== 'undefined') {
-                    fbq('track','Purchase',{value:total,currency:'BRL',content_ids:['solare-luminaria'],content_type:'product'});
+                    fbq('track','Purchase',{value:total,currency:'BRL',num_items:1,content_ids:['solare-luminaria'],content_type:'product'});
                     fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'});
                     fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'});
                 }
