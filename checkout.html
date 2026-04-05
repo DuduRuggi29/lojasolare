@@ -877,22 +877,32 @@
             <div class="step-content" id="content-3">
                 <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Escolha como deseja receber seu pedido:</p>
                 <div class="shipping-options">
-                    <div class="shipping-option selected" onclick="selectShipping('regular', 0, 'Envio Regular (Grátis)')">
+                    <div class="shipping-option selected" data-shipping-key="regular" onclick="selectShipping('regular', 0, 'Envio Regular (Grátis)')">
                         <div class="shipping-info">
                             <div class="radio-circle"><div class="radio-inner"></div></div>
                             <div>
-                                <span class="shipping-text">Envio Regular</span>
-                                <span class="shipping-eta">4 a 8 dias úteis</span>
+                                <span class="shipping-text">Envio Regular - Prazo de 3 a 7 dias</span>
+                                <span class="shipping-eta">Entrega em 3 a 7 dias úteis</span>
                             </div>
                         </div>
                         <span class="shipping-price" style="color:var(--accent)">Grátis</span>
                     </div>
-                    <div class="shipping-option" onclick="selectShipping('express', 19.90, 'Envio Expresso (24h)')">
+                    <div class="shipping-option" data-shipping-key="pickup" onclick="selectShipping('pickup', 0, 'Retire no Galpão - Paracambi (Grátis)')">
                         <div class="shipping-info">
                             <div class="radio-circle"><div class="radio-inner"></div></div>
                             <div>
-                                <span class="shipping-text">Envio Expresso</span>
-                                <span class="shipping-eta">Até 24 horas</span>
+                                <span class="shipping-text">Retire no Galpão - Paracambi</span>
+                                <span class="shipping-eta">Disponível em até 2 dias úteis</span>
+                            </div>
+                        </div>
+                        <span class="shipping-price" style="color:var(--accent)">Grátis</span>
+                    </div>
+                    <div class="shipping-option" data-shipping-key="express" onclick="selectShipping('express', 19.90, 'Envio Expresso (24h)')">
+                        <div class="shipping-info">
+                            <div class="radio-circle"><div class="radio-inner"></div></div>
+                            <div>
+                                <span class="shipping-text">Envio Expresso - Prazo de 24 Horas</span>
+                                <span class="shipping-eta">Entrega em até 24 horas</span>
                             </div>
                         </div>
                         <span class="shipping-price">R$ 19,90</span>
@@ -1227,7 +1237,8 @@
         selectedShippingPrice = cost;
         selectedShippingName = name;
         document.querySelectorAll('.shipping-option').forEach(o => o.classList.remove('selected'));
-        document.querySelectorAll('.shipping-option')[type === 'regular' ? 0 : 1].classList.add('selected');
+        const target = document.querySelector(`.shipping-option[data-shipping-key="${type}"]`);
+        if (target) target.classList.add('selected');
         updateTotalDisplay();
     }
 
@@ -1307,7 +1318,8 @@
             document.getElementById('txt-sum-cep-2').textContent = `CEP: ${cep}`;
         } else if (n === 3) {
             document.getElementById('txt-sum-ship-3').textContent = selectedShippingName;
-            document.getElementById('txt-sum-eta-3').textContent = selectedShippingPrice === 0 ? '4 a 8 dias úteis' : 'Até 24 horas';
+            const etaMap = { 'Envio Regular (Grátis)': '3 a 7 dias úteis', 'Retire no Galpão - Paracambi (Grátis)': 'Retirada em Paracambi', 'Envio Expresso (24h)': 'Até 24 horas' };
+            document.getElementById('txt-sum-eta-3').textContent = etaMap[selectedShippingName] || selectedShippingName;
         }
 
         // Mark step n done
