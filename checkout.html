@@ -1538,6 +1538,14 @@
                     fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'});
                     fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'});
                 }
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'conversion', {
+                        'send_to': 'AW-18069829591/dHkICM7xopccENfvrqhD',
+                        'value': total,
+                        'currency': 'BRL',
+                        'transaction_id': result.paymentId || ''
+                    });
+                }
                 const dest = result.orderId
                     ? `/upsell.html?orderId=${result.orderId}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
