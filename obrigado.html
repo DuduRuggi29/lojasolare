@@ -171,14 +171,15 @@
                 fbq('trackCustom', 'PurchaseNewClient', { value: orderTotal, currency: 'BRL' });
                 fbq('trackCustom', 'PurchasePix', { value: orderTotal, currency: 'BRL' });
             }
-            if (typeof gtag !== 'undefined') {
+            // Aguarda gtag.js carregar completamente antes de disparar conversão
+            window.addEventListener('load', function() {
                 gtag('event', 'conversion', {
                     'send_to': 'AW-18069829591/dHkICM7xopccENfvrqhD',
                     'value': orderTotal,
                     'currency': 'BRL',
                     'transaction_id': paymentId
                 });
-            }
+            });
         }
     }
     // Cartão: NÃO dispara aqui — já foi disparado em checkout.html antes do redirect

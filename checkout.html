@@ -1543,18 +1543,19 @@
                     fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'});
                     fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'});
                 }
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'conversion', {
-                        'send_to': 'AW-18069829591/dHkICM7xopccENfvrqhD',
-                        'value': total,
-                        'currency': 'BRL',
-                        'transaction_id': result.paymentId || ''
-                    });
-                }
                 const dest = result.orderId
                     ? `/upsell.html?orderId=${result.orderId}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
-                window.location.href = dest;
+                // Aguarda gtag enviar a conversão antes de redirecionar
+                gtag('event', 'conversion', {
+                    'send_to': 'AW-18069829591/dHkICM7xopccENfvrqhD',
+                    'value': total,
+                    'currency': 'BRL',
+                    'transaction_id': result.paymentId || '',
+                    'event_callback': function() { window.location.href = dest; }
+                });
+                // Fallback: redireciona mesmo se gtag demorar
+                setTimeout(function() { window.location.href = dest; }, 1500);
             } else {
                 const reason = result.error || 'Verifique os dados ou o limite do cartão.';
                 console.error('Card payment declined:', result);
