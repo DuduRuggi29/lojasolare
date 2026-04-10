@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved, schedulePixReminder } from './send-notification.js';
+import { notifyPaymentApproved, schedulePixReminder, schedulePixReminder2h, schedulePixReminder4h, schedulePostPurchaseEmails } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
 
 const supabase = createClient(
@@ -145,14 +145,17 @@ export default async function handler(req, res) {
 
     if (dbError) console.error('Supabase Error:', dbError);
 
-    // ── Reminder Pix (20 min, cancelável) ────────────────
+    // ── Reminders Pix (canceláveis se a pessoa pagar) ────
     let pixReminderId = null;
+    let pixReminder2hId = null;
+    let pixReminder4hId = null;
     if (isPix) {
       const pixCode = mpResult.point_of_interaction?.transaction_data?.qr_code;
-      if (pixCode) {
-        pixReminderId = await schedulePixReminder({ customerName, customerEmail, pixCode })
-          .catch(e => { console.error('Pix reminder failed (non-fatal):', e); return null; });
-      }
+      [pixReminderId, pixReminder2hId, pixReminder4hId] = await Promise.all([
+        pixCode ? schedulePixReminder({ customerName, customerEmail, pixCode }).catch(() => null) : null,
+        schedulePixReminder2h({ customerName, customerEmail }).catch(() => null),
+        schedulePixReminder4h({ customerName, customerEmail }).catch(() => null),
+      ]);
     }
 
     // ── Meta CAPI: Pix → dispara na geração; Cartão → dispara na aprovação ──
@@ -184,6 +187,14 @@ export default async function handler(req, res) {
         totalPrice, shippingMethod,
         orderId: order?.id || mpResult.id,
       });
+
+      // Emails pós-compra (apenas cartão aprovado — Pix é agendado no check-payment-status)
+      if (!isPix) {
+        schedulePostPurchaseEmails({
+          customerName, customerEmail,
+          orderId: order?.id || mpResult.id,
+        }).catch(e => console.error('Post-purchase emails failed (non-fatal):', e));
+      }
     }
 
     return res.status(200).json({
@@ -193,7 +204,9 @@ export default async function handler(req, res) {
       orderId:         order?.id || null,
       qr_code:         isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code        ?? null) : null,
       qr_code_base64:  isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null) : null,
-      pix_reminder_id: pixReminderId || null,
+      pix_reminder_id:    pixReminderId    || null,
+      pix_reminder_2h_id: pixReminder2hId  || null,
+      pix_reminder_4h_id: pixReminder4hId  || null,
     });
 
   } catch (err) {

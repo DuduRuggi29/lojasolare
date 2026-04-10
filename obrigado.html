@@ -157,7 +157,9 @@
     const pixCode = params.get('qr_code');
     const pixImg = params.get('qr_code_base64');
     const paymentId = params.get('id');
-    const reminderId = params.get('reminder_id') || '';
+    const reminderId   = params.get('reminder_id')    || '';
+    const reminder2hId = params.get('reminder_2h_id') || '';
+    const reminder4hId = params.get('reminder_4h_id') || '';
     const isUpsell = params.get('upsell') === 'true';
     const orderTotal = parseFloat(params.get('total') || '0');
 
@@ -246,8 +248,10 @@
     async function startPixPolling(id) {
         const interval = setInterval(async () => {
             try {
-                const reminderParam = reminderId ? `&reminder_id=${encodeURIComponent(reminderId)}` : '';
-                const res = await fetch(`/api/check-payment-status?payment_id=${id}${reminderParam}`);
+                const reminderParam   = reminderId   ? `&reminder_id=${encodeURIComponent(reminderId)}`       : '';
+                const reminder2hParam = reminder2hId ? `&reminder_2h_id=${encodeURIComponent(reminder2hId)}` : '';
+                const reminder4hParam = reminder4hId ? `&reminder_4h_id=${encodeURIComponent(reminder4hId)}` : '';
+                const res = await fetch(`/api/check-payment-status?payment_id=${id}${reminderParam}${reminder2hParam}${reminder4hParam}`);
                 const data = await res.json();
 
                 if (data.status === 'approved') {
