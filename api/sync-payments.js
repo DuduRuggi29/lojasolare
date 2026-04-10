@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { notifyPaymentApproved, schedulePostPurchaseEmails } from './send-notification.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -76,10 +77,35 @@ export default async function handler(req, res) {
         }
 
         if (newStatus && newStatus !== 'pending') {
+          // Busca dados completos do pedido para enviar email
+          const { data: fullOrder } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', order.id)
+            .single();
+
           const { error: upErr } = await supabase
             .from('orders')
             .update({ status: newStatus })
             .eq('id', order.id);
+
+          // Envia email de confirmação para pedidos aprovados
+          if (newStatus === 'approved' && fullOrder) {
+            notifyPaymentApproved({
+              customerName:   fullOrder.customer_name,
+              customerEmail:  fullOrder.customer_email,
+              customerPhone:  fullOrder.customer_phone,
+              totalPrice:     fullOrder.total_price,
+              shippingMethod: fullOrder.shipping_method,
+              orderId:        fullOrder.id,
+            }).catch(e => console.error('[Sync] Email confirmação falhou:', e));
+
+            schedulePostPurchaseEmails({
+              customerName:  fullOrder.customer_name,
+              customerEmail: fullOrder.customer_email,
+              orderId:       fullOrder.id,
+            }).catch(e => console.error('[Sync] Emails pós-compra falharam:', e));
+          }
 
           results.push({ id: order.id, mp_payment_id: pid, old: 'pending', new: newStatus, error: upErr?.message || null });
         } else {
