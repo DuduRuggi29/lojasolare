@@ -181,20 +181,21 @@ export default async function handler(req, res) {
         },
         eventId: `purchase-${mpResult.id}`,
       }).catch(e => console.error('Meta CAPI failed (non-fatal):', e));
+    }
 
+    // ── Emails pós-compra: apenas cartão aprovado
+    // Pix: email de confirmação e emails pós-compra são enviados em check-payment-status
+    // quando o pagamento for de fato detectado como aprovado
+    if (!isPix && paymentStatus === 'approved') {
       await notifyPaymentApproved({
         customerName, customerEmail, customerPhone,
         totalPrice, shippingMethod,
         orderId: order?.id || mpResult.id,
       });
-
-      // Emails pós-compra (apenas cartão aprovado — Pix é agendado no check-payment-status)
-      if (!isPix) {
-        schedulePostPurchaseEmails({
-          customerName, customerEmail,
-          orderId: order?.id || mpResult.id,
-        }).catch(e => console.error('Post-purchase emails failed (non-fatal):', e));
-      }
+      schedulePostPurchaseEmails({
+        customerName, customerEmail,
+        orderId: order?.id || mpResult.id,
+      }).catch(e => console.error('Post-purchase emails failed (non-fatal):', e));
     }
 
     return res.status(200).json({
