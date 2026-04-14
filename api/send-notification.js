@@ -551,3 +551,54 @@ export async function cancelPixReminder(reminderId) {
     console.error('[Resend] Cancel reminder failed:', e.message);
   }
 }
+
+export async function sendTrackingEmail({ to, customerName, trackingCode, totalPrice, quantity }) {
+  const name = escapeHtml(customerName || 'Cliente');
+  const code = escapeHtml(trackingCode || '');
+  const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f7f5;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7f5;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+        <tr><td style="background:#1a3c34;padding:32px;text-align:center;">
+          <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">🌞 Solare</h1>
+          <p style="color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;">lojassolare.com.br</p>
+        </td></tr>
+        <tr><td style="padding:40px 40px 32px;">
+          <h2 style="font-size:20px;font-weight:700;color:#1a1d2e;margin:0 0 8px;">🚚 Seu pedido está a caminho!</h2>
+          <p style="color:#4b5563;font-size:15px;line-height:1.6;margin:0 0 28px;">Olá, <strong>${name}</strong>! Seu pedido foi enviado e já está em trânsito. Acompanhe a entrega com o código abaixo:</p>
+
+          <div style="background:#f0fdf4;border:2px dashed #16a34a;border-radius:12px;padding:24px;text-align:center;margin-bottom:28px;">
+            <p style="margin:0 0 8px;font-size:13px;color:#16a34a;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Código de Rastreio</p>
+            <p style="margin:0;font-size:22px;font-weight:800;color:#1a1d2e;letter-spacing:2px;">${code}</p>
+          </div>
+
+          <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 28px;">Você pode usar este código para acompanhar sua entrega nos Correios ou na transportadora responsável.</p>
+
+          <div style="background:#f9fafb;border-radius:12px;padding:20px;margin-bottom:28px;">
+            <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Resumo do pedido</p>
+            <p style="margin:0;font-size:14px;color:#1a1d2e;">💡 Luminária Solar Solare — <strong>${quantity || 1} unidade(s)</strong></p>
+            <p style="margin:4px 0 0;font-size:14px;color:#1a1d2e;">💰 Total pago: <strong>R$ ${parseFloat(totalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></p>
+          </div>
+
+          <p style="color:#4b5563;font-size:14px;margin:0 0 16px;">Ficou com alguma dúvida? Fale com nosso suporte:</p>
+          <a href="https://wa.me/5521975605337" style="display:inline-block;background:#25d366;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;">💬 Falar no WhatsApp</a>
+        </td></tr>
+        <tr><td style="background:#f9fafb;padding:24px;text-align:center;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:12px;color:#9ca3af;">Solare — lojassolare.com.br</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return sendEmail({
+    to,
+    subject: '🚚 Seu pedido Solare está a caminho!',
+    html,
+  });
+}

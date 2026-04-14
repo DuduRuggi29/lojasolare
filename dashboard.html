@@ -293,10 +293,12 @@
               <th>Frete</th>
               <th>Pagamento</th>
               <th>Status</th>
+              <th>Feito</th>
+              <th>Rastreio</th>
             </tr>
           </thead>
           <tbody id="orders-body">
-            <tr class="loading-row"><td colspan="10"><div class="spinner"></div>Carregando...</td></tr>
+            <tr class="loading-row"><td colspan="12"><div class="spinner"></div>Carregando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -386,7 +388,7 @@
     // Primeiro carregamento: mostra spinner
     if (firstLoad) {
       document.getElementById('orders-body').innerHTML =
-        '<tr class="loading-row"><td colspan="10"><div class="spinner"></div>Carregando...</td></tr>';
+        '<tr class="loading-row"><td colspan="12"><div class="spinner"></div>Carregando...</td></tr>';
     }
 
     try {
@@ -421,7 +423,7 @@
     } catch (e) {
       if (firstLoad) {
         document.getElementById('orders-body').innerHTML =
-          '<tr class="loading-row"><td colspan="10">Erro ao carregar dados.</td></tr>';
+          '<tr class="loading-row"><td colspan="12">Erro ao carregar dados.</td></tr>';
       }
     }
   }
@@ -524,7 +526,7 @@
   function renderTable(orders) {
     if (!orders || orders.length === 0) {
       document.getElementById('orders-body').innerHTML =
-        '<tr class="loading-row"><td colspan="10">Nenhum pedido encontrado.</td></tr>';
+        '<tr class="loading-row"><td colspan="12">Nenhum pedido encontrado.</td></tr>';
       return;
     }
 
@@ -544,6 +546,21 @@
         <td class="nowrap" style="font-size:12px">${o.shipping_method ? esc(o.shipping_method) + (o.shipping_price ? '<br>' + fmt(o.shipping_price) : '') : '—'}</td>
         <td class="nowrap">${methodBadge(o.payment_method)}</td>
         <td>${statusBadge(o.status)}</td>
+        <td style="text-align:center">
+          ${o.order_placed
+            ? `<span style="color:#16a34a;font-size:18px;font-weight:700" title="Pedido feito">✅</span>`
+            : `<button onclick="markPlaced('${o.id}', this)" style="background:#f0fdf4;border:1.5px solid #16a34a;color:#16a34a;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Marcar feito</button>`
+          }
+        </td>
+        <td style="min-width:170px">
+          ${o.tracking_code
+            ? `<div style="font-size:12px;font-weight:700;color:#1a1d2e;background:#f0fdf4;border-radius:8px;padding:6px 10px;text-align:center">${esc(o.tracking_code)}<br><span style="font-size:11px;color:#16a34a;font-weight:400">✅ Enviado</span></div>`
+            : `<div style="display:flex;gap:4px;align-items:center">
+                <input id="track-${o.id}" type="text" placeholder="Código..." style="flex:1;min-width:0;padding:6px 8px;border:1.5px solid #e8eaf0;border-radius:8px;font-size:12px;outline:none">
+                <button onclick="sendTracking('${o.id}', this)" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Enviar</button>
+              </div>`
+          }
+        </td>
       </tr>
     `).join('');
   }
@@ -585,6 +602,58 @@
     currentPage = p;
     loadData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Marcar pedido como feito ──────────────────────────────────
+  async function markPlaced(orderId, btn) {
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const res = await fetch('/api/order-actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'place', orderId, password }),
+      });
+      if (res.ok) {
+        const td = btn.closest('td');
+        td.innerHTML = '<span style="color:#16a34a;font-size:18px;font-weight:700" title="Pedido feito">✅</span>';
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Marcar feito';
+        alert('Erro ao marcar pedido.');
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = 'Marcar feito';
+    }
+  }
+
+  // ── Enviar código de rastreio ─────────────────────────────────
+  async function sendTracking(orderId, btn) {
+    const input = document.getElementById('track-' + orderId);
+    const code = input ? input.value.trim() : '';
+    if (!code) { alert('Digite o código de rastreio.'); return; }
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const res = await fetch('/api/order-actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'tracking', orderId, password, trackingCode: code }),
+      });
+      if (res.ok) {
+        const td = btn.closest('td');
+        td.innerHTML = `<div style="font-size:12px;font-weight:700;color:#1a1d2e;background:#f0fdf4;border-radius:8px;padding:6px 10px;text-align:center">${code}<br><span style="font-size:11px;color:#16a34a;font-weight:400">✅ Enviado</span></div>`;
+      } else {
+        const data = await res.json();
+        btn.disabled = false;
+        btn.textContent = 'Enviar';
+        alert('Erro: ' + (data.error || 'Tente novamente.'));
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = 'Enviar';
+    }
   }
 </script>
 </body>
