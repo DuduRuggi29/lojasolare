@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18069829591"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'AW-18069829591');
-      gtag('event', 'conversion', {
-          'send_to': 'AW-18069829591/jn44CIGpk5ccENfvrqhD',
-          'value': 1.0,
-          'currency': 'BRL'
-      });
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Finalizar Compra — Solare</title>
@@ -1546,16 +1533,7 @@
                 const dest = result.orderId
                     ? `/upsell.html?orderId=${result.orderId}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
-                // Aguarda gtag enviar a conversão antes de redirecionar
-                gtag('event', 'conversion', {
-                    'send_to': 'AW-18069829591/dHkICM7xopccENfvrqhD',
-                    'value': total,
-                    'currency': 'BRL',
-                    'transaction_id': result.paymentId || '',
-                    'event_callback': function() { window.location.href = dest; }
-                });
-                // Fallback: redireciona mesmo se gtag demorar
-                setTimeout(function() { window.location.href = dest; }, 1500);
+                window.location.href = dest;
             } else {
                 const reason = result.error || 'Verifique os dados ou o limite do cartão.';
                 console.error('Card payment declined:', result);

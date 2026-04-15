@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18069829591"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'AW-18069829591');
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedido Confirmado — Solare</title>
@@ -173,15 +165,6 @@
                 fbq('trackCustom', 'PurchaseNewClient', { value: orderTotal, currency: 'BRL' });
                 fbq('trackCustom', 'PurchasePix', { value: orderTotal, currency: 'BRL' });
             }
-            // Aguarda gtag.js carregar completamente antes de disparar conversão
-            window.addEventListener('load', function() {
-                gtag('event', 'conversion', {
-                    'send_to': 'AW-18069829591/dHkICM7xopccENfvrqhD',
-                    'value': orderTotal,
-                    'currency': 'BRL',
-                    'transaction_id': paymentId
-                });
-            });
         }
     }
     // Cartão: NÃO dispara aqui — já foi disparado em checkout.html antes do redirect
