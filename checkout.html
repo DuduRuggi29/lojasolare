@@ -1541,7 +1541,14 @@
                 const dest = result.orderId
                     ? `/upsell.html?orderId=${result.orderId}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
-                window.location.href = dest;
+                gtag('event', 'conversion', {
+                    'send_to': 'AW-17714329725/033BCIzz6JwcEP3w7P5B',
+                    'value': total,
+                    'currency': 'BRL',
+                    'transaction_id': result.paymentId || '',
+                    'event_callback': function() { window.location.href = dest; }
+                });
+                setTimeout(function() { window.location.href = dest; }, 1500);
             } else {
                 const reason = result.error || 'Verifique os dados ou o limite do cartão.';
                 console.error('Card payment declined:', result);
