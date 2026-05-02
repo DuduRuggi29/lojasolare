@@ -48,6 +48,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Valor inválido.' });
     if (isNaN(parsedQty) || parsedQty < 1 || parsedQty > 100)
       return res.status(400).json({ error: 'Quantidade inválida.' });
+    // Valor mínimo = Kit 1 (78,90) com desconto Pix de 5% = 74,95
+    const PRECO_MINIMO = 74.95;
+    if (parsedTotal < PRECO_MINIMO)
+      return res.status(400).json({ error: 'Valor do pedido inválido. Atualize a página e tente novamente.' });
     if (!customerAddress?.cep || String(customerAddress.cep).replace(/\D/g, '').length !== 8)
       return res.status(400).json({ error: 'CEP inválido.' });
     if (!['pix', 'credit_card'].includes(String(paymentMethodId)))
