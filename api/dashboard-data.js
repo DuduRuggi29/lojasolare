@@ -49,7 +49,8 @@ export default async function handler(req, res) {
     // ── 2. Stats respeitando filtros de data/método/busca (sem status) ──
     let statsQ = supabase
       .from('orders')
-      .select('status, payment_method, total_price, created_at');
+      .select('status, payment_method, total_price, created_at')
+      .limit(10000);
 
     if (fromTs) statsQ = statsQ.gte('created_at', fromTs);
     if (toTs)   statsQ = statsQ.lte('created_at', toTs);
@@ -66,8 +67,19 @@ export default async function handler(req, res) {
     // ── 3. Stats gerais (sempre all-time, para referência) ────
     const { data: allRows, error: err3 } = await supabase
       .from('orders')
-      .select('status, payment_method, total_price, created_at');
+      .select('status, payment_method, total_price, created_at')
+      .limit(10000);
     if (err3) throw err3;
+
+    // ── 4. Pix pendente — sempre all-time, sem filtros ────────
+    const { data: pixPendRows, error: err4 } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('status', 'pending')
+      .eq('payment_method', 'pix')
+      .limit(10000);
+    if (err4) throw err4;
+    const totalPixPendente = pixPendRows.length;
 
     // "Hoje" no fuso Brasil
     const nowBR  = new Date(Date.now() - 3 * 60 * 60 * 1000);
@@ -103,7 +115,7 @@ export default async function handler(req, res) {
       // ── Filtrado (data/método/busca) ──
       total_pedidos:      filteredRows.length,
       total_pagos:        filteredRows.filter(o => o.status === 'approved').length,
-      total_pix_pendente: filteredRows.filter(o => o.status === 'pending' && o.payment_method === 'pix').length,
+      total_pix_pendente: totalPixPendente,
       total_faturado:     filteredRows.filter(o => o.status === 'approved').reduce((s, o) => s + parseFloat(o.total_price || 0), 0),
       cartao_total:       filteredRows.filter(o => o.status === 'approved' && o.payment_method !== 'pix').length,
       pix_total:          filteredRows.filter(o => o.status === 'approved' && o.payment_method === 'pix').length,
