@@ -294,7 +294,7 @@
               <th>Pagamento</th>
               <th>Status</th>
               <th>Feito</th>
-              <th>Rastreio</th>
+              <th>Observação</th>
             </tr>
           </thead>
           <tbody id="orders-body">
@@ -552,14 +552,15 @@
             : `<button onclick="markPlaced('${o.id}', this)" style="background:#f0fdf4;border:1.5px solid #16a34a;color:#16a34a;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Marcar feito</button>`
           }
         </td>
-        <td style="min-width:170px">
-          ${o.tracking_code
-            ? `<div style="font-size:12px;font-weight:700;color:#1a1d2e;background:#f0fdf4;border-radius:8px;padding:6px 10px;text-align:center">${esc(o.tracking_code)}<br><span style="font-size:11px;color:#16a34a;font-weight:400">✅ Enviado</span></div>`
-            : `<div style="display:flex;gap:4px;align-items:center">
-                <input id="track-${o.id}" type="text" placeholder="Código..." style="flex:1;min-width:0;padding:6px 8px;border:1.5px solid #e8eaf0;border-radius:8px;font-size:12px;outline:none">
-                <button onclick="sendTracking('${o.id}', this)" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Enviar</button>
-              </div>`
-          }
+        <td style="min-width:200px">
+          <textarea
+            id="obs-${o.id}"
+            onblur="saveObservation('${o.id}', this)"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.blur();}"
+            placeholder="Anotação sobre o pedido..."
+            style="width:100%;min-height:54px;padding:6px 8px;border:1.5px solid #e8eaf0;border-radius:8px;font-size:12px;outline:none;resize:vertical;font-family:inherit;line-height:1.4;background:#fafbff;"
+          >${esc(o.observation || '')}</textarea>
+          <div id="obs-status-${o.id}" style="font-size:11px;color:var(--green);min-height:14px;margin-top:2px;"></div>
         </td>
       </tr>
     `).join('');
@@ -628,31 +629,23 @@
     }
   }
 
-  // ── Enviar código de rastreio ─────────────────────────────────
-  async function sendTracking(orderId, btn) {
-    const input = document.getElementById('track-' + orderId);
-    const code = input ? input.value.trim() : '';
-    if (!code) { alert('Digite o código de rastreio.'); return; }
-    btn.disabled = true;
-    btn.textContent = '...';
+  // ── Salvar observação ─────────────────────────────────────────
+  async function saveObservation(orderId, textarea) {
+    const text = textarea.value;
+    const status = document.getElementById('obs-status-' + orderId);
     try {
       const res = await fetch('/api/order-actions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'tracking', orderId, password, trackingCode: code }),
+        body: JSON.stringify({ action: 'observation', orderId, password, observation: text }),
       });
       if (res.ok) {
-        const td = btn.closest('td');
-        td.innerHTML = `<div style="font-size:12px;font-weight:700;color:#1a1d2e;background:#f0fdf4;border-radius:8px;padding:6px 10px;text-align:center">${code}<br><span style="font-size:11px;color:#16a34a;font-weight:400">✅ Enviado</span></div>`;
+        if (status) { status.textContent = '✓ Salvo'; setTimeout(() => { status.textContent = ''; }, 2000); }
       } else {
-        const data = await res.json();
-        btn.disabled = false;
-        btn.textContent = 'Enviar';
-        alert('Erro: ' + (data.error || 'Tente novamente.'));
+        if (status) { status.style.color = 'var(--red)'; status.textContent = 'Erro ao salvar'; }
       }
     } catch {
-      btn.disabled = false;
-      btn.textContent = 'Enviar';
+      if (status) { status.style.color = 'var(--red)'; status.textContent = 'Erro ao salvar'; }
     }
   }
 </script>
