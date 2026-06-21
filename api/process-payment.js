@@ -113,11 +113,8 @@ export default async function handler(req, res) {
           },
           address: {
             zip_code:      cepDigits,
-            street_name:   addr.street       || '',
-            street_number: addr.number       || '',
-            neighborhood:  addr.neighborhood || '',
-            city:          addr.city         || '',
-            federal_unit:  addr.state        || '',
+            street_name:   addr.street || '',
+            street_number: addr.number || '',
           },
         },
         shipments: {
