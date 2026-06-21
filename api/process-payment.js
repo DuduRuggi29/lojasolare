@@ -63,9 +63,17 @@ export default async function handler(req, res) {
     const lastName   = nameParts.slice(1).join(' ') || firstName;
 
     // ── Montar pagamento Mercado Pago ──────────────────────
+    const phoneDigits = String(customerPhone || '').replace(/\D/g, '');
+    const addr        = customerAddress || {};
+    const cepDigits   = String(addr.cep || '').replace(/\D/g, '');
+    const unitPrice   = Math.round((parsedTotal / parsedQty) * 100) / 100;
+
     const paymentBody = {
       transaction_amount: parsedTotal,
       description: `Luminária Solar Solare — Kit ${quantity} unidades`,
+      statement_descriptor: 'LOJA SOLARE',
+      external_reference: `solare-${Date.now()}`,
+      notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
       payer: {
         email:      customerEmail.trim().toLowerCase(),
         first_name: firstName,
@@ -73,6 +81,54 @@ export default async function handler(req, res) {
         identification: {
           type:   'CPF',
           number: cpfDigits,
+        },
+        phone: {
+          area_code: phoneDigits.slice(0, 2),
+          number:    phoneDigits.slice(2),
+        },
+        address: {
+          zip_code:      cepDigits,
+          street_name:   addr.street   || '',
+          street_number: addr.number   || '',
+        },
+      },
+      additional_info: {
+        items: [
+          {
+            id:          'luminaria-solar-solare',
+            title:       'Luminária Solar Solare',
+            description: 'Luminária solar de alta durabilidade com certificação IP65, ideal para jardins, escadas e áreas externas.',
+            picture_url: 'https://lojassolare.com.br/luminaria-info.png',
+            category_id: 'home',
+            quantity:    parsedQty,
+            unit_price:  unitPrice,
+          },
+        ],
+        payer: {
+          first_name: firstName,
+          last_name:  lastName,
+          phone: {
+            area_code: phoneDigits.slice(0, 2),
+            number:    phoneDigits.slice(2),
+          },
+          address: {
+            zip_code:      cepDigits,
+            street_name:   addr.street       || '',
+            street_number: addr.number       || '',
+            neighborhood:  addr.neighborhood || '',
+            city:          addr.city         || '',
+            federal_unit:  addr.state        || '',
+          },
+        },
+        shipments: {
+          receiver_address: {
+            zip_code:      cepDigits,
+            street_name:   addr.street       || '',
+            street_number: addr.number       || '',
+            apartment:     addr.complement   || '',
+            city_name:     addr.city         || '',
+            state_name:    addr.state        || '',
+          },
         },
       },
     };

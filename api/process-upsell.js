@@ -34,25 +34,81 @@ export default async function handler(req, res) {
     }
 
     // Charge the saved card for the upsell (no token needed — uses saved customer card)
-    const upsellAmount = 49.90;
+    const upsellAmount  = 49.90;
+    const nameParts     = order.customer_name.trim().split(/\s+/);
+    const firstName     = nameParts[0];
+    const lastName      = nameParts.slice(1).join(' ') || firstName;
+    const phoneDigits   = String(order.customer_phone || '').replace(/\D/g, '');
+    const addr          = order.customer_address || {};
+    const cepDigits     = String(addr.cep || '').replace(/\D/g, '');
+
     const paymentData = {
       transaction_amount: upsellAmount,
       description: 'Upsell — Kit 2 Luminárias Solar Solare',
+      statement_descriptor: 'LOJA SOLARE',
+      external_reference: `upsell-${orderId}-${Date.now()}`,
+      notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
       payment_method_id: order.payment_method,
       installments: 1,
       payer: {
         email: order.customer_email,
-        first_name: order.customer_name.split(' ')[0],
-        last_name: order.customer_name.split(' ').slice(1).join(' '),
+        first_name: firstName,
+        last_name: lastName,
         identification: {
           type: 'CPF',
           number: order.customer_cpf?.replace(/\D/g, ''),
         },
+        phone: {
+          area_code: phoneDigits.slice(0, 2),
+          number:    phoneDigits.slice(2),
+        },
+        address: {
+          zip_code:      cepDigits,
+          street_name:   addr.street || '',
+          street_number: addr.number || '',
+        },
       },
       customer_id: order.mp_customer_id,
       card_id: order.mp_card_id,
-      notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
-      external_reference: `upsell-${orderId}-${Date.now()}`,
+      additional_info: {
+        items: [
+          {
+            id:          'luminaria-solar-solare',
+            title:       'Luminária Solar Solare',
+            description: 'Luminária solar de alta durabilidade com certificação IP65, ideal para jardins, escadas e áreas externas.',
+            picture_url: 'https://lojassolare.com.br/luminaria-info.png',
+            category_id: 'home',
+            quantity:    2,
+            unit_price:  upsellAmount / 2,
+          },
+        ],
+        payer: {
+          first_name: firstName,
+          last_name:  lastName,
+          phone: {
+            area_code: phoneDigits.slice(0, 2),
+            number:    phoneDigits.slice(2),
+          },
+          address: {
+            zip_code:      cepDigits,
+            street_name:   addr.street       || '',
+            street_number: addr.number       || '',
+            neighborhood:  addr.neighborhood || '',
+            city:          addr.city         || '',
+            federal_unit:  addr.state        || '',
+          },
+        },
+        shipments: {
+          receiver_address: {
+            zip_code:      cepDigits,
+            street_name:   addr.street       || '',
+            street_number: addr.number       || '',
+            apartment:     addr.complement   || '',
+            city_name:     addr.city         || '',
+            state_name:    addr.state        || '',
+          },
+        },
+      },
     };
 
     const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
