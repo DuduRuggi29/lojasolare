@@ -1610,6 +1610,11 @@
             const result = await res.json();
             if (res.ok && result.qr_code) {
                 const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
+                sessionStorage.setItem('solare_payer', JSON.stringify({
+                    email: (document.getElementById('cust-email')?.value || '').trim().toLowerCase(),
+                    phone: (document.getElementById('cust-phone')?.value || '').replace(/\D/g,''),
+                    name:  (document.getElementById('cust-name')?.value  || '').trim(),
+                }));
                 const reminderParam    = result.pix_reminder_id    ? `&reminder_id=${encodeURIComponent(result.pix_reminder_id)}`       : '';
                 const reminder2hParam  = result.pix_reminder_2h_id ? `&reminder_2h_id=${encodeURIComponent(result.pix_reminder_2h_id)}` : '';
                 const reminder4hParam  = result.pix_reminder_4h_id ? `&reminder_4h_id=${encodeURIComponent(result.pix_reminder_4h_id)}` : '';

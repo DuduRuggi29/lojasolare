@@ -169,9 +169,15 @@
         if (!sessionStorage.getItem(pixKey)) {
             sessionStorage.setItem(pixKey, '1');
             if (typeof fbq !== 'undefined') {
-                fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', num_items: 1, content_ids: ['solare-luminaria'], content_type: 'product' });
-                fbq('trackCustom', 'PurchaseNewClient', { value: orderTotal, currency: 'BRL' });
-                fbq('trackCustom', 'PurchasePix', { value: orderTotal, currency: 'BRL' });
+                const _payer = JSON.parse(sessionStorage.getItem('solare_payer') || '{}');
+                if (_payer.email) {
+                    const _nm = (_payer.name || '').split(/\s+/);
+                    fbq('init', '878359704804021', { em: _payer.email, ph: _payer.phone, fn: (_nm[0]||'').toLowerCase(), ln: (_nm.slice(1).join(' ')||'').toLowerCase() });
+                }
+                const _evId = `purchase-${paymentId}`;
+                fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', num_items: 1, content_ids: ['solare-luminaria'], content_type: 'product' }, { eventID: _evId });
+                fbq('trackCustom', 'PurchaseNewClient', { value: orderTotal, currency: 'BRL' }, { eventID: `purchasenew-${paymentId}` });
+                fbq('trackCustom', 'PurchasePix', { value: orderTotal, currency: 'BRL' }, { eventID: `purchasepix-${paymentId}` });
             }
             gtag('event', 'conversion', {
                 'send_to': 'AW-17714329725/033BCIzz6JwcEP3w7P5B',
