@@ -1015,7 +1015,7 @@
 
                 <div class="trust-row">
                     <div class="trust-item"><i class="fas fa-shield-alt"></i> SSL 256-bit</div>
-                    <div class="trust-item"><i class="fas fa-lock"></i> PagBank</div>
+                    <div class="trust-item"><img src="/mp-logo.png" alt="Mercado Pago" style="height:16px;vertical-align:middle;"> Mercado Pago</div>
                     <div class="trust-item"><i class="fas fa-undo"></i> 90 dias garantia</div>
                 </div>
             </div>
@@ -1351,6 +1351,10 @@
             document.getElementById(`step-${next}`).classList.add('is-active');
             if (next === 4) {
                 if (typeof fbq !== 'undefined') {
+                    const _em4 = (document.getElementById('cust-email')?.value || '').trim().toLowerCase();
+                    const _ph4 = (document.getElementById('cust-phone')?.value || '').replace(/\D/g,'');
+                    const _nm4 = (document.getElementById('cust-name')?.value  || '').trim().split(/\s+/);
+                    fbq('init','878359704804021',{em:_em4,ph:_ph4,fn:(_nm4[0]||'').toLowerCase(),ln:(_nm4.slice(1).join(' ')||'').toLowerCase()});
                     fbq('track', 'AddPaymentInfo', {
                         content_ids: ['solare-luminaria'],
                         content_type: 'product',
@@ -1540,9 +1544,14 @@
                 alert(`Pagamento recusado.\nMotivo: ${reason}\n\nVerifique os dados ou tente com outro cartão.`);
             } else if (result.status === 'approved') {
                 if (typeof fbq !== 'undefined') {
-                    fbq('track','Purchase',{value:total,currency:'BRL',num_items:1,content_ids:['solare-luminaria'],content_type:'product'});
-                    fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'});
-                    fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'});
+                    const _em  = (document.getElementById('cust-email')?.value || '').trim().toLowerCase();
+                    const _ph  = (document.getElementById('cust-phone')?.value || '').replace(/\D/g,'');
+                    const _nm  = (document.getElementById('cust-name')?.value  || '').trim().split(/\s+/);
+                    fbq('init','878359704804021',{em:_em,ph:_ph,fn:(_nm[0]||'').toLowerCase(),ln:(_nm.slice(1).join(' ')||'').toLowerCase()});
+                    const _evId = `purchase-${result.id}`;
+                    fbq('track','Purchase',{value:total,currency:'BRL',num_items:1,content_ids:['solare-luminaria'],content_type:'product'},{eventID:_evId});
+                    fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'},{eventID:`purchasenew-${result.id}`});
+                    fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'},{eventID:`purchasecard-${result.id}`});
                 }
                 const dest = result.orderId
                     ? `/upsell.html?orderId=${result.orderId}`
