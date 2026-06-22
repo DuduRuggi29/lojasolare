@@ -1354,7 +1354,10 @@
                     const _em4 = (document.getElementById('cust-email')?.value || '').trim().toLowerCase();
                     const _ph4 = (document.getElementById('cust-phone')?.value || '').replace(/\D/g,'');
                     const _nm4 = (document.getElementById('cust-name')?.value  || '').trim().split(/\s+/);
-                    fbq('init','878359704804021',{em:_em4,ph:_ph4,fn:(_nm4[0]||'').toLowerCase(),ln:(_nm4.slice(1).join(' ')||'').toLowerCase()});
+                    const _ct4 = (document.getElementById('addr-city')?.value  || '').trim().toLowerCase();
+                    const _st4 = (document.getElementById('addr-state')?.value || '').trim().toLowerCase();
+                    const _zp4 = (document.getElementById('addr-cep')?.value   || '').replace(/\D/g,'');
+                    fbq('init','878359704804021',{em:_em4,ph:_ph4,fn:(_nm4[0]||'').toLowerCase(),ln:(_nm4.slice(1).join(' ')||'').toLowerCase(),ct:_ct4,st:_st4,zp:_zp4});
                     fbq('track', 'AddPaymentInfo', {
                         content_ids: ['solare-luminaria'],
                         content_type: 'product',
@@ -1547,7 +1550,10 @@
                     const _em  = (document.getElementById('cust-email')?.value || '').trim().toLowerCase();
                     const _ph  = (document.getElementById('cust-phone')?.value || '').replace(/\D/g,'');
                     const _nm  = (document.getElementById('cust-name')?.value  || '').trim().split(/\s+/);
-                    fbq('init','878359704804021',{em:_em,ph:_ph,fn:(_nm[0]||'').toLowerCase(),ln:(_nm.slice(1).join(' ')||'').toLowerCase()});
+                    const _ct  = (document.getElementById('addr-city')?.value  || '').trim().toLowerCase();
+                    const _st  = (document.getElementById('addr-state')?.value || '').trim().toLowerCase();
+                    const _zp  = (document.getElementById('addr-cep')?.value   || '').replace(/\D/g,'');
+                    fbq('init','878359704804021',{em:_em,ph:_ph,fn:(_nm[0]||'').toLowerCase(),ln:(_nm.slice(1).join(' ')||'').toLowerCase(),ct:_ct,st:_st,zp:_zp});
                     const _evId = `purchase-${result.id}`;
                     fbq('track','Purchase',{value:total,currency:'BRL',num_items:1,content_ids:['solare-luminaria'],content_type:'product'},{eventID:_evId});
                     fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'},{eventID:`purchasenew-${result.id}`});
@@ -1614,6 +1620,9 @@
                     email: (document.getElementById('cust-email')?.value || '').trim().toLowerCase(),
                     phone: (document.getElementById('cust-phone')?.value || '').replace(/\D/g,''),
                     name:  (document.getElementById('cust-name')?.value  || '').trim(),
+                    city:  (document.getElementById('addr-city')?.value  || '').trim().toLowerCase(),
+                    state: (document.getElementById('addr-state')?.value || '').trim().toLowerCase(),
+                    zip:   (document.getElementById('addr-cep')?.value   || '').replace(/\D/g,''),
                 }));
                 const reminderParam    = result.pix_reminder_id    ? `&reminder_id=${encodeURIComponent(result.pix_reminder_id)}`       : '';
                 const reminder2hParam  = result.pix_reminder_2h_id ? `&reminder_2h_id=${encodeURIComponent(result.pix_reminder_2h_id)}` : '';

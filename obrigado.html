@@ -172,7 +172,7 @@
                 const _payer = JSON.parse(sessionStorage.getItem('solare_payer') || '{}');
                 if (_payer.email) {
                     const _nm = (_payer.name || '').split(/\s+/);
-                    fbq('init', '878359704804021', { em: _payer.email, ph: _payer.phone, fn: (_nm[0]||'').toLowerCase(), ln: (_nm.slice(1).join(' ')||'').toLowerCase() });
+                    fbq('init', '878359704804021', { em: _payer.email, ph: _payer.phone, fn: (_nm[0]||'').toLowerCase(), ln: (_nm.slice(1).join(' ')||'').toLowerCase(), ct: _payer.city||'', st: _payer.state||'', zp: _payer.zip||'' });
                 }
                 const _evId = `purchase-${paymentId}`;
                 fbq('track', 'Purchase', { value: orderTotal, currency: 'BRL', num_items: 1, content_ids: ['solare-luminaria'], content_type: 'product' }, { eventID: _evId });
