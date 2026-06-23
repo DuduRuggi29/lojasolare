@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved, schedulePostPurchaseEmails } from './send-notification.js';
+import { notifyPaymentApproved, schedulePostPurchaseEmails, sendWhatsAppApproved } from './send-notification.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -105,6 +105,11 @@ export default async function handler(req, res) {
               customerEmail: fullOrder.customer_email,
               orderId:       fullOrder.id,
             }).catch(e => console.error('[Sync] Emails pós-compra falharam:', e));
+
+            sendWhatsAppApproved({
+              customerName:  fullOrder.customer_name,
+              customerPhone: fullOrder.customer_phone,
+            }).catch(e => console.error('[Sync] WhatsApp falhou:', e));
           }
 
           results.push({ id: order.id, mp_payment_id: pid, old: 'pending', new: newStatus, error: upErr?.message || null });
