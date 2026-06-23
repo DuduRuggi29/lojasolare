@@ -18,6 +18,8 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_FROM = process.env.TWILIO_PHONE_FROM;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'pedidos@lojassolare.com.br';
 const WHATSAPP_NUMBER = '21975605337';
+const ZAPI_INSTANCE_ID = process.env.ZAPI_INSTANCE_ID;
+const ZAPI_TOKEN = process.env.ZAPI_TOKEN;
 
 // ─────────────────────────────────────────────
 // Email Templates
@@ -601,4 +603,32 @@ export async function sendTrackingEmail({ to, customerName, trackingCode, totalP
     subject: '🚚 Seu pedido Solare está a caminho!',
     html,
   });
+}
+
+// ─────────────────────────────────────────────
+// WhatsApp via Z-API
+// ─────────────────────────────────────────────
+
+export async function sendWhatsAppApproved({ customerName, customerPhone }) {
+  if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN) return;
+
+  const firstName = (customerName || 'Cliente').trim().split(/\s+/)[0];
+  const digits = String(customerPhone || '').replace(/\D/g, '');
+  const phone = digits.startsWith('55') ? digits : `55${digits}`;
+
+  const message = `Olá ${firstName}! 🎉 Acabamos de receber seu pagamento e seu pedido está sendo processado. Logo sairá para entrega! 🚚\n\nLembrando que nosso prazo de entrega é de 8 dias úteis.\n\nQualquer dúvida, estamos aqui! 😊`;
+
+  try {
+    const res = await fetch(`https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/send-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, message }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('[Z-API] Erro ao enviar WhatsApp:', err);
+    }
+  } catch (e) {
+    console.error('[Z-API] Falha na requisição:', e);
+  }
 }

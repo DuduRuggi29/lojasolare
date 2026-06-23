@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved, notifyPixExpired, schedulePostPurchaseEmails } from './send-notification.js';
+import { notifyPaymentApproved, notifyPixExpired, schedulePostPurchaseEmails, sendWhatsAppApproved } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
 import crypto from 'crypto';
 
@@ -119,6 +119,11 @@ export default async function handler(req, res) {
           customerEmail: order.customer_email,
           orderId:       order.id,
         }).catch(e => console.error('Post-purchase emails (webhook) failed:', e));
+
+        sendWhatsAppApproved({
+          customerName:  order.customer_name,
+          customerPhone: order.customer_phone,
+        }).catch(e => console.error('WhatsApp notification (webhook) failed:', e));
 
         // Meta CAPI Purchase (especially important for Pix — browser pixel may not fire)
         const nameParts = (order.customer_name || '').trim().split(/\s+/);

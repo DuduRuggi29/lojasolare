@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved, schedulePixReminder, schedulePixReminder2h, schedulePixReminder4h, schedulePostPurchaseEmails } from './send-notification.js';
+import { notifyPaymentApproved, schedulePixReminder, schedulePixReminder2h, schedulePixReminder4h, schedulePostPurchaseEmails, sendWhatsAppApproved } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
 
 const supabase = createClient(
@@ -253,6 +253,8 @@ export default async function handler(req, res) {
         customerName, customerEmail,
         orderId: order?.id || mpResult.id,
       }).catch(e => console.error('Post-purchase emails failed (non-fatal):', e));
+      sendWhatsAppApproved({ customerName, customerPhone })
+        .catch(e => console.error('WhatsApp notification failed (non-fatal):', e));
     }
 
     return res.status(200).json({
