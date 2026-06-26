@@ -120,7 +120,7 @@ export default async function handler(req, res) {
           orderId:       order.id,
         }).catch(e => console.error('Post-purchase emails (webhook) failed:', e));
 
-        sendWhatsAppApproved({
+        await sendWhatsAppApproved({
           customerName:  order.customer_name,
           customerPhone: order.customer_phone,
         }).catch(e => console.error('WhatsApp notification (webhook) failed:', e));

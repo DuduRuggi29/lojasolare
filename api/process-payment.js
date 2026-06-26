@@ -253,7 +253,7 @@ export default async function handler(req, res) {
         customerName, customerEmail,
         orderId: order?.id || mpResult.id,
       }).catch(e => console.error('Post-purchase emails failed (non-fatal):', e));
-      sendWhatsAppApproved({ customerName, customerPhone })
+      await sendWhatsAppApproved({ customerName, customerPhone })
         .catch(e => console.error('WhatsApp notification failed (non-fatal):', e));
     }
 

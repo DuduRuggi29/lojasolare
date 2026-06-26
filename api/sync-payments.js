@@ -106,7 +106,7 @@ export default async function handler(req, res) {
               orderId:       fullOrder.id,
             }).catch(e => console.error('[Sync] Emails pós-compra falharam:', e));
 
-            sendWhatsAppApproved({
+            await sendWhatsAppApproved({
               customerName:  fullOrder.customer_name,
               customerPhone: fullOrder.customer_phone,
             }).catch(e => console.error('[Sync] WhatsApp falhou:', e));
