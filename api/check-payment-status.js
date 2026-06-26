@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { notifyPaymentApproved, cancelPixReminder, schedulePostPurchaseEmails } from './send-notification.js';
+import { notifyPaymentApproved, cancelPixReminder, schedulePostPurchaseEmails, sendWhatsAppApproved } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
 
 const supabase = createClient(
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         if (reminder_2h_id) cancelPixReminder(reminder_2h_id).catch(() => {});
         if (reminder_4h_id) cancelPixReminder(reminder_4h_id).catch(() => {});
 
-        notifyPaymentApproved({
+        await notifyPaymentApproved({
           customerName:  order.customer_name,
           customerEmail: order.customer_email,
           customerPhone: order.customer_phone,
@@ -65,6 +65,11 @@ export default async function handler(req, res) {
           shippingMethod: order.shipping_method,
           orderId:       order.id,
         }).catch(e => console.error('Email notification failed:', e));
+
+        await sendWhatsAppApproved({
+          customerName:  order.customer_name,
+          customerPhone: order.customer_phone,
+        }).catch(e => console.error('WhatsApp notification failed:', e));
 
         // Agendar emails pós-compra (3h e 2 dias)
         schedulePostPurchaseEmails({
