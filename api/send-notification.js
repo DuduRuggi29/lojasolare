@@ -617,7 +617,7 @@ export async function sendWhatsAppApproved({ customerName, customerPhone }) {
   const digits = String(customerPhone || '').replace(/\D/g, '');
   const phone = digits.startsWith('55') ? digits : `55${digits}`;
 
-  const message = `Olá ${firstName}! 🎉 Acabamos de receber seu pagamento e seu pedido está sendo processado. Logo sairá para entrega! 🚚\n\nLembrando que nosso prazo de entrega é de 8 dias úteis.\n\nQualquer dúvida, estamos aqui! 😊`;
+  const message = `Oi ${firstName}! 😊 Somos da Loja Solare!\n\nSeu pedido está confirmado e já está sendo processado. Logo mais sairá para entrega! 🚚\n\n⚠️ *Prazo de entrega: 8 dias úteis.*\n\nQualquer dúvida, estamos aqui! 😊`;
 
   try {
     const res = await fetch(`https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/send-text`, {
