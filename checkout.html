@@ -364,6 +364,69 @@
             letter-spacing: 0.3px;
         }
 
+        /* ── ORDER BUMPS ── */
+        .order-bump-section { margin-bottom: 18px; }
+        .order-bump-header {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .order-bump-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 13px 14px;
+            margin-bottom: 10px;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .order-bump-card:last-child { margin-bottom: 0; }
+        .order-bump-card.selected { border-color: var(--accent); background: var(--accent-light); }
+        .order-bump-check {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: #fff;
+        }
+        .order-bump-card.selected .order-bump-check {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+        .order-bump-check i { display: none; color: #fff; font-size: 10px; }
+        .order-bump-card.selected .order-bump-check i { display: block; }
+        .order-bump-body { flex: 1; min-width: 0; }
+        .order-bump-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 2px 7px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .order-bump-badge.best    { background: #fff0e6; color: #e05e00; }
+        .order-bump-badge.popular { background: #f1f5f9; color: #64748b; }
+        .order-bump-title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 2px; }
+        .order-bump-desc  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+        .order-bump-price { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+
         /* ── PIX INFO BOX ── */
         .pix-info-box {
             background: #f0faf0;
@@ -955,6 +1018,29 @@
                     </button>
                 </div>
 
+                <!-- Order Bumps -->
+                <div class="order-bump-section">
+                    <p class="order-bump-header"><i class="fas fa-gift"></i> Adicione ao seu pedido:</p>
+                    <div class="order-bump-card" id="bump-luminarias" onclick="toggleBump('luminarias')">
+                        <div class="order-bump-check"><i class="fas fa-check"></i></div>
+                        <div class="order-bump-body">
+                            <span class="order-bump-badge best">Mais Vendido</span>
+                            <div class="order-bump-title">Leve +2 Luminárias Solares</div>
+                            <div class="order-bump-desc">Leve mais 2 unidades com desconto exclusivo</div>
+                        </div>
+                        <div class="order-bump-price">+ R$ 59,90</div>
+                    </div>
+                    <div class="order-bump-card" id="bump-envio" onclick="toggleBump('envio')">
+                        <div class="order-bump-check"><i class="fas fa-check"></i></div>
+                        <div class="order-bump-body">
+                            <span class="order-bump-badge popular">Popular</span>
+                            <div class="order-bump-title">Envio Priorizado</div>
+                            <div class="order-bump-desc">Ganhe prioridade na separação e no envio do pedido</div>
+                        </div>
+                        <div class="order-bump-price">+ R$ 9,90</div>
+                    </div>
+                </div>
+
                 <!-- Payment mini summary — updates dynamically -->
                 <div class="payment-mini-summary">
                     <div class="mini-row"><span>Subtotal</span><span id="pay-sub">R$ 8,00</span></div>
@@ -1133,12 +1219,32 @@
     const light = urlParams.get('light') || 'warm';
     let selectedShippingPrice = 0;
     let selectedShippingName = 'Envio Regular (Grátis)';
+    let bumpLuminarias = false;
+    let bumpEnvio = false;
+
+    function getOrderBumpTotal() {
+        return (bumpLuminarias ? 59.90 : 0) + (bumpEnvio ? 9.90 : 0);
+    }
+
+    window.toggleBump = function(id) {
+        if (id === 'luminarias') {
+            bumpLuminarias = !bumpLuminarias;
+            document.getElementById('bump-luminarias').classList.toggle('selected', bumpLuminarias);
+        } else {
+            bumpEnvio = !bumpEnvio;
+            document.getElementById('bump-envio').classList.toggle('selected', bumpEnvio);
+        }
+        updateTotalDisplay();
+        if (document.getElementById('card-payment-form')?.style.display !== 'none') {
+            populateInstallments();
+        }
+    };
 
     // ── DISPLAY ──────────────────────────────────────────
     function fmt(n) { return 'R$ ' + n.toFixed(2).replace('.', ','); }
 
     function updateTotalDisplay() {
-        const sub = price;
+        const sub = price + getOrderBumpTotal();
         const total = sub + selectedShippingPrice;
         const shipTxt = selectedShippingPrice === 0 ? 'Grátis' : fmt(selectedShippingPrice);
 
@@ -1361,7 +1467,7 @@
                     fbq('track', 'AddPaymentInfo', {
                         content_ids: ['solare-luminaria'],
                         content_type: 'product',
-                        value: price + selectedShippingPrice,
+                        value: price + selectedShippingPrice + getOrderBumpTotal(),
                         currency: 'BRL',
                         num_items: qty,
                     });
@@ -1421,9 +1527,10 @@
     // ── INSTALLMENTS ──────────────────────────────────────
     function populateInstallments() {
         const sel = document.getElementById('card-installments');
-        if (!sel || sel.options.length > 1) return;
+        if (!sel) return;
+        const prevVal = sel.value;
         sel.innerHTML = '';
-        const total = price + selectedShippingPrice;
+        const total = price + selectedShippingPrice + getOrderBumpTotal();
         for (let i = 1; i <= 12; i++) {
             const val = (total / i).toFixed(2).replace('.', ',');
             const opt = document.createElement('option');
@@ -1431,6 +1538,7 @@
             opt.textContent = `${i}x de R$ ${val}${i === 1 ? ' (sem juros)' : ' (sem juros)'}`;
             sel.appendChild(opt);
         }
+        if (prevVal) sel.value = prevVal;
     }
 
     // ── CARD INPUT MASKS ──────────────────────────────────
@@ -1528,7 +1636,7 @@
                     },
                     quantity:            qty,
                     lightColor:          light,
-                    totalPrice:          price + selectedShippingPrice,
+                    totalPrice:          price + selectedShippingPrice + getOrderBumpTotal(),
                     paymentMethodId:     'credit_card',
                     cardToken:           tokenResult.id,
                     cardPaymentMethodId: cardPaymentMethodId,
@@ -1539,7 +1647,7 @@
             });
 
             const result = await res.json();
-            const total  = price + selectedShippingPrice;
+            const total  = price + selectedShippingPrice + getOrderBumpTotal();
 
             if (!res.ok) {
                 const reason = result.error || 'Erro desconhecido';
@@ -1607,7 +1715,7 @@
                     },
                     quantity: qty,
                     lightColor: light,
-                    totalPrice: (price + selectedShippingPrice) * 0.95,
+                    totalPrice: (price + selectedShippingPrice + getOrderBumpTotal()) * 0.95,
                     paymentMethodId: 'pix',
                     shippingMethod: selectedShippingName,
                     shippingPrice: selectedShippingPrice,
@@ -1615,7 +1723,7 @@
             });
             const result = await res.json();
             if (res.ok && result.qr_code) {
-                const pixTotal = Math.round((price + selectedShippingPrice) * 0.95 * 100) / 100;
+                const pixTotal = Math.round((price + selectedShippingPrice + getOrderBumpTotal()) * 0.95 * 100) / 100;
                 sessionStorage.setItem('solare_payer', JSON.stringify({
                     email: (document.getElementById('cust-email')?.value || '').trim().toLowerCase(),
                     phone: (document.getElementById('cust-phone')?.value || '').replace(/\D/g,''),
