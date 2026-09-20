@@ -189,6 +189,10 @@
     }
     // Cartão: NÃO dispara aqui — já foi disparado em checkout.html antes do redirect
 
+    if (params.get('upsell') === 'pending') {
+        document.getElementById('status-desc').innerText = 'Sua compra está confirmada. O pagamento da oferta adicional está em análise e você será avisado por e-mail.';
+    }
+
     if (isUpsell) {
         document.getElementById('status-title').innerText = 'Oferta Adicionada com Sucesso!';
         document.getElementById('status-desc').innerText = 'Parabéns pela escolha! Seu pedido completo foi atualizado e será enviado em breve.';

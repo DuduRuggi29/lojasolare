@@ -72,7 +72,17 @@
         #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .cvv-box { text-align: left; margin-bottom: 15px; }
+        .cvv-box label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+        #cvv-field { height: 48px; border: 2px solid #d1d5db; border-radius: 10px; padding: 0 12px; background: #fff; display: flex; align-items: center; }
+        #cvv-field iframe { height: 44px !important; }
+        .cvv-hint { font-size: 12px; color: #6b7280; margin-top: 6px; }
+        .timer { font-weight: 800; color: #dc2626; font-size: 16px; margin-bottom: 20px; }
+        .form-error { color: #dc2626; font-size: 14px; font-weight: 600; margin: 0 0 12px; display: none; }
+        .btn-upsell:disabled { opacity: .6; cursor: not-allowed; animation: none; }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
 </head>
 <body>
 
@@ -100,9 +110,18 @@
                 <p style="font-size: 12px; color: #059669; font-weight: 700;">FRETE GRÁTIS INCLUSO</p>
             </div>
 
-            <button onclick="processUpsell()" class="btn-upsell">
+            <p class="timer">Oferta expira em <span id="countdown">--:--</span></p>
+
+            <div class="cvv-box">
+                <label for="cvv-field">Confirme o código de segurança (CVV) do cartão usado na compra</label>
+                <div id="cvv-field"></div>
+                <p class="cvv-hint"><i class="fas fa-lock"></i> Cobrado no mesmo cartão da compra, em 1x. Seus dados não são armazenados na loja.</p>
+            </div>
+            <p class="form-error" id="form-error"></p>
+
+            <button id="btn-upsell" onclick="processUpsell()" class="btn-upsell" disabled>
                 SIM! ADICIONAR AO MEU PEDIDO
-                <span>Clique único: cobrado no mesmo cartão finalizado</span>
+                <span>Confirmar com o CVV e finalizar</span>
             </button>
 
             <button onclick="skipUpsell()" class="btn-no">Não obrigado, quero apenas o que já comprei.</button>
@@ -121,43 +140,91 @@
         <p style="color: #6b7280; margin-top: 10px;">Por favor, não feche o navegador.</p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const orderId = params.get('orderId');
+        const THANKS = 'obrigado.html?status=approved';
+
+        let mp = null, cardId = null, expiresAt = 0, submitting = false, timerId = null;
+        const btn = document.getElementById('btn-upsell');
+        const errorEl = document.getElementById('form-error');
+
+        function showError(msg) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
+        function go(url) { clearInterval(timerId); window.location.href = url; }
+
+        function tick() {
+            const left = Math.max(0, expiresAt - Date.now());
+            const m = String(Math.floor(left / 60000)).padStart(2, '0');
+            const s = String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
+            document.getElementById('countdown').textContent = m + ':' + s;
+            if (left === 0) go(THANKS);
+        }
+
+        async function init() {
+            if (!orderId) return go(THANKS);
+            try {
+                const res = await fetch('/api/upsell-info?orderId=' + encodeURIComponent(orderId));
+                if (!res.ok) return go(THANKS); // sem oferta (expirada, já usada, sem cartão salvo)
+                const info = await res.json();
+                cardId = info.cardId;
+                expiresAt = info.expiresAt;
+
+                mp = new MercadoPago(info.publicKey, { locale: 'pt-BR' });
+                mp.fields.create('securityCode', { placeholder: 'CVV' }).mount('cvv-field');
+
+                tick();
+                timerId = setInterval(tick, 1000);
+                btn.disabled = false;
+            } catch (err) {
+                console.error('Upsell init error:', err);
+                go(THANKS);
+            }
+        }
 
         async function processUpsell() {
-            if (!orderId) {
-                window.location.href = 'obrigado.html?status=approved';
-                return;
-            }
-
-            document.getElementById('loading-overlay').style.display = 'flex';
+            if (submitting || !mp || !cardId) return;
+            submitting = true;
+            btn.disabled = true;
+            errorEl.style.display = 'none';
 
             try {
+                const tokenRes = await mp.fields.createCardToken({ cardId });
+                if (!tokenRes || !tokenRes.id) {
+                    showError('Confira o CVV e tente novamente.');
+                    return;
+                }
+
+                document.getElementById('loading-overlay').style.display = 'flex';
                 const response = await fetch('/api/process-upsell', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId })
+                    body: JSON.stringify({ orderId, token: tokenRes.id })
                 });
-
                 const result = await response.json();
 
                 if (result.success) {
-                    window.location.href = 'obrigado.html?status=approved&upsell=true';
+                    if (typeof fbq !== 'undefined') fbq('trackCustom', 'UpsellAccepted', { value: 49.90, currency: 'BRL' });
+                    go(THANKS + (result.status === 'approved' ? '&upsell=true' : '&upsell=pending'));
+                } else if (response.status === 400 && result.error === 'Upsell payment failed') {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    showError('O pagamento da oferta não foi aprovado. Confira o CVV ou continue sem a oferta (sua compra já está garantida).');
                 } else {
-                    console.error('Upsell failed:', result);
-                    window.location.href = 'obrigado.html?status=approved&upsell=failed';
+                    go(THANKS + '&upsell=failed');
                 }
             } catch (err) {
-                console.error('Network error:', err);
-                window.location.href = 'obrigado.html?status=approved';
+                console.error('Upsell error:', err);
+                document.getElementById('loading-overlay').style.display = 'none';
+                showError('Não foi possível concluir agora. Confira o CVV e tente novamente, ou continue sem a oferta.');
+            } finally {
+                submitting = false;
+                if (!document.getElementById('loading-overlay').style.display.includes('flex')) btn.disabled = false;
             }
         }
 
-        function skipUpsell() {
-            window.location.href = 'obrigado.html?status=approved';
-        }
+        function skipUpsell() { go(THANKS); }
+
+        init();
     </script>
 </body>
 </html>

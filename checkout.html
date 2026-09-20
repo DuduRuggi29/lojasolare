@@ -1601,7 +1601,7 @@
             } catch (_) { /* usa visa como fallback */ }
 
             // Tokenizar cartão via SDK Mercado Pago
-            const tokenResult = await mp.createCardToken({
+            const cardData = {
                 cardNumber:           number,
                 cardholderName:       holder.toUpperCase(),
                 cardExpirationMonth:  expMonth,
@@ -1609,13 +1609,21 @@
                 securityCode:         cvv,
                 identificationType:   'CPF',
                 identificationNumber: cpfDigits,
-            });
+            };
+            const tokenResult = await mp.createCardToken(cardData);
 
             if (!tokenResult?.id) {
                 const cause = tokenResult?.cause?.[0]?.description || 'Dados do cartão inválidos.';
                 alert(cause);
                 return;
             }
+
+            // Segundo token (cada token vale um único uso): serve só para salvar o cartão para o upsell
+            let saveTokenId = null;
+            try {
+                const saveToken = await mp.createCardToken(cardData);
+                saveTokenId = saveToken?.id || null;
+            } catch (_) { /* sem upsell, mas a compra segue normalmente */ }
 
             const res = await fetch('/api/process-payment', {
                 method: 'POST',
@@ -1639,6 +1647,9 @@
                     totalPrice:          price + selectedShippingPrice + getOrderBumpTotal(),
                     paymentMethodId:     'credit_card',
                     cardToken:           tokenResult.id,
+                    cardTokenSave:       saveTokenId,
+                    cardFirstSix:        number.slice(0, 6),
+                    cardLastFour:        number.slice(-4),
                     cardPaymentMethodId: cardPaymentMethodId,
                     installments:        installments,
                     shippingMethod:      selectedShippingName,
@@ -1667,7 +1678,7 @@
                     fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'},{eventID:`purchasenew-${result.id}`});
                     fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'},{eventID:`purchasecard-${result.id}`});
                 }
-                const dest = result.orderId
+                const dest = (result.orderId && result.upsellAvailable)
                     ? `/upsell.html?orderId=${result.orderId}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
                 gtag('event', 'conversion', {

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { notifyPaymentApproved } from './send-notification.js';
+import { loadEligibleOrder, UPSELL_AMOUNT } from './_upsell.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -10,31 +11,15 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { orderId } = req.body;
-    if (!orderId) return res.status(400).json({ error: 'Missing orderId' });
+    const { orderId, token } = req.body || {};
+    if (!orderId || !token) return res.status(400).json({ error: 'Missing orderId or token' });
 
-    // Fetch original order from Supabase
-    const { data: order, error: fetchError } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .single();
+    // Pedido aprovado no cartão, com cartão salvo, dentro do prazo e sem upsell anterior
+    const eligible = await loadEligibleOrder(supabase, orderId);
+    if (!eligible.order) return res.status(eligible.status).json({ error: eligible.error });
+    const order = eligible.order;
 
-    if (fetchError || !order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Só permite upsell em pedidos aprovados via cartão
-    if (order.status !== 'approved' || order.payment_method === 'pix') {
-      return res.status(403).json({ error: 'Upsell not allowed for this order' });
-    }
-
-    if (!order.mp_customer_id || !order.mp_card_id) {
-      return res.status(400).json({ error: 'No saved card found for this order' });
-    }
-
-    // Charge the saved card for the upsell (no token needed — uses saved customer card)
-    const upsellAmount  = 49.90;
+    const upsellAmount  = UPSELL_AMOUNT;
     const nameParts     = order.customer_name.trim().split(/\s+/);
     const firstName     = nameParts[0];
     const lastName      = nameParts.slice(1).join(' ') || firstName;
@@ -48,28 +33,15 @@ export default async function handler(req, res) {
       statement_descriptor: 'LOJA SOLARE',
       external_reference: `upsell-${orderId}-${Date.now()}`,
       notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
-      payment_method_id: order.payment_method,
+      token,
+      payment_method_id: order.mp_card_payment_method,
       installments: 1,
+      capture: true,
       payer: {
+        type: 'customer',
+        id: order.mp_customer_id,
         email: order.customer_email,
-        first_name: firstName,
-        last_name: lastName,
-        identification: {
-          type: 'CPF',
-          number: order.customer_cpf?.replace(/\D/g, ''),
-        },
-        phone: {
-          area_code: phoneDigits.slice(0, 2),
-          number:    phoneDigits.slice(2),
-        },
-        address: {
-          zip_code:      cepDigits,
-          street_name:   addr.street || '',
-          street_number: addr.number || '',
-        },
       },
-      customer_id: order.mp_customer_id,
-      card_id: order.mp_card_id,
       additional_info: {
         items: [
           {
@@ -113,7 +85,7 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        'X-Idempotency-Key': `upsell-${orderId}-${Date.now()}`,
+        'X-Idempotency-Key': `upsell-${orderId}-${token}`,
       },
       body: JSON.stringify(paymentData),
     });
@@ -122,7 +94,7 @@ export default async function handler(req, res) {
 
     if (!mpResponse.ok || mpResult.status === 'rejected') {
       console.error('MP Upsell Error:', mpResult);
-      return res.status(400).json({ error: 'Upsell payment failed', details: mpResult });
+      return res.status(400).json({ error: 'Upsell payment failed' });
     }
 
     // Save upsell order to Supabase
@@ -136,6 +108,7 @@ export default async function handler(req, res) {
       product_light_color: order.product_light_color,
       total_price: upsellAmount,
       payment_method: order.payment_method,
+      upsell_of: orderId,
       mp_payment_id: String(mpResult.id),
       status: mpResult.status === 'approved' ? 'approved' : 'pending',
       shipping_method: order.shipping_method,

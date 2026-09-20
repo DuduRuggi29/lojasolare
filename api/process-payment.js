@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { notifyPaymentApproved, schedulePixReminder, schedulePixReminder2h, schedulePixReminder4h, schedulePostPurchaseEmails, sendWhatsAppApproved } from './send-notification.js';
 import { sendMetaEvent } from './meta-capi.js';
+import { saveCardForCustomer } from './_mp-cards.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -26,6 +27,9 @@ export default async function handler(req, res) {
       totalPrice,
       paymentMethodId,
       cardToken,
+      cardTokenSave,
+      cardFirstSix,
+      cardLastFour,
       cardPaymentMethodId,
       installments,
       shippingMethod,
@@ -202,6 +206,34 @@ export default async function handler(req, res) {
 
     if (dbError) console.error('Supabase Error:', dbError);
 
+    // ── Cartão aprovado: salva o cartão no Mercado Pago para o upsell ──
+    // Falha aqui não afeta a compra: o cliente só não verá a oferta.
+    let upsellAvailable = false;
+    if (!isPix && paymentStatus === 'approved' && cardTokenSave && order?.id) {
+      try {
+        const saved = await saveCardForCustomer({
+          email: customerEmail.trim().toLowerCase(),
+          firstName, lastName, cpf: cpfDigits,
+          cardToken: cardTokenSave,
+          firstSix: cardFirstSix, lastFour: cardLastFour,
+        });
+        if (saved) {
+          const { error: cardErr } = await supabase
+            .from('orders')
+            .update({
+              mp_customer_id: saved.customerId,
+              mp_card_id: saved.cardId,
+              mp_card_payment_method: saved.paymentMethodId || cardPaymentMethodId || null,
+            })
+            .eq('id', order.id);
+          if (cardErr) console.error('Supabase card update error:', cardErr);
+          else upsellAvailable = true;
+        }
+      } catch (e) {
+        console.error('Save card failed (non-fatal):', e);
+      }
+    }
+
     // ── Reminders Pix (canceláveis se a pessoa pagar) ────
     let pixReminderId = null;
     let pixReminder2hId = null;
@@ -262,6 +294,7 @@ export default async function handler(req, res) {
       status:          paymentStatus,
       id:              mpResult.id,
       orderId:         order?.id || null,
+      upsellAvailable,
       qr_code:         isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code        ?? null) : null,
       qr_code_base64:  isPix ? (mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null) : null,
       pix_reminder_id:    pixReminderId    || null,
