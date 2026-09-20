@@ -264,6 +264,10 @@
                 if (data.status === 'approved') {
                     clearInterval(interval);
                     showSuccess();
+                    // Pix confirmado: abre a oferta de upsell (pagável também via Pix)
+                    if (data.orderId) {
+                        setTimeout(() => { window.location.href = '/upsell.html?orderId=' + encodeURIComponent(data.orderId); }, 2500);
+                    }
                 }
             } catch (e) {
                 console.error('Erro polling:', e);

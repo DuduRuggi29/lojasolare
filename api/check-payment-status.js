@@ -24,8 +24,11 @@ export default async function handler(req, res) {
       .eq('mp_payment_id', String(payment_id))
       .single();
 
+    // orderId só é exposto para pedidos Pix normais aprovados (a página de obrigado o usa para abrir o upsell)
+    const upsellOrderId = (order && !order.upsell_of && order.payment_method === 'pix') ? order.id : null;
+
     if (order?.status === 'approved') {
-      return res.status(200).json({ status: 'approved' });
+      return res.status(200).json({ status: 'approved', orderId: upsellOrderId });
     }
 
     // 2. Consultar diretamente a API do Mercado Pago
@@ -48,7 +51,14 @@ export default async function handler(req, res) {
         .eq('mp_payment_id', String(payment_id));
 
       // Enviar email + notificações (só se ainda não estava aprovado)
-      if (order) {
+      if (order?.upsell_of) {
+        // Upsell: só avisa o pagamento (sem repetir e-mails pós-compra e WhatsApp do pedido original)
+        await notifyPaymentApproved({
+          customerName: order.customer_name, customerEmail: order.customer_email,
+          customerPhone: order.customer_phone, totalPrice: order.total_price,
+          shippingMethod: order.shipping_method, orderId: order.id,
+        }).catch(e => console.error('Upsell notification failed:', e));
+      } else if (order) {
         const nameParts = (order.customer_name || '').trim().split(/\s+/);
         const addr = order.customer_address || {};
 
@@ -79,7 +89,7 @@ export default async function handler(req, res) {
         }).catch(e => console.error('Post-purchase emails failed:', e));
       }
 
-      return res.status(200).json({ status: 'approved' });
+      return res.status(200).json({ status: 'approved', orderId: upsellOrderId });
     }
 
     return res.status(200).json({ status: mpStatus || order?.status || 'pending' });

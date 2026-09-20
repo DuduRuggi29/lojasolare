@@ -12,12 +12,22 @@ export default async function handler(req, res) {
 
   try {
     const { orderId, token, cardPaymentMethodId } = req.body || {};
-    if (!orderId || !token || !cardPaymentMethodId) return res.status(400).json({ error: 'Missing orderId, token or payment method' });
+    if (!orderId) return res.status(400).json({ error: 'Missing orderId' });
 
     // Pedido aprovado no cartão, com cartão salvo, dentro do prazo e sem upsell anterior
     const eligible = await loadEligibleOrder(supabase, orderId);
     if (!eligible.order) return res.status(eligible.status).json({ error: eligible.error });
     const order = eligible.order;
+    const isPix = eligible.isPix;
+
+    if (!isPix && (!token || !cardPaymentMethodId)) {
+      return res.status(400).json({ error: 'Missing token or payment method' });
+    }
+    if (eligible.existing) {
+      // Só chega aqui para Pix pendente já gerado: devolve o mesmo QR Code
+      const e = eligible.existing;
+      return res.status(200).json({ success: true, status: 'pending', pix: { paymentId: e.mp_payment_id, qrCode: e.pix_qr_code, qrCodeBase64: e.pix_qr_code_base64 } });
+    }
 
     const upsellAmount  = UPSELL_AMOUNT;
     const nameParts     = order.customer_name.trim().split(/\s+/);
@@ -33,10 +43,9 @@ export default async function handler(req, res) {
       statement_descriptor: 'LOJA SOLARE',
       external_reference: `upsell-${orderId}-${Date.now()}`,
       notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
-      token,
-      payment_method_id: String(cardPaymentMethodId),
-      installments: 1,
-      capture: true,
+      ...(isPix
+        ? { payment_method_id: 'pix', date_of_expiration: new Date(Date.now() + 10 * 60 * 1000).toISOString() }
+        : { token, payment_method_id: String(cardPaymentMethodId), installments: 1, capture: true }),
       payer: {
         email: order.customer_email,
         first_name: firstName,
@@ -89,7 +98,7 @@ export default async function handler(req, res) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        'X-Idempotency-Key': `upsell-${orderId}-${token}`,
+        'X-Idempotency-Key': isPix ? `upsell-pix-${orderId}` : `upsell-${orderId}-${token}`,
       },
       body: JSON.stringify(paymentData),
     });
@@ -113,6 +122,10 @@ export default async function handler(req, res) {
       total_price: upsellAmount,
       payment_method: order.payment_method,
       upsell_of: orderId,
+      ...(isPix ? {
+        pix_qr_code: mpResult.point_of_interaction?.transaction_data?.qr_code ?? null,
+        pix_qr_code_base64: mpResult.point_of_interaction?.transaction_data?.qr_code_base64 ?? null,
+      } : {}),
       mp_payment_id: String(mpResult.id),
       status: mpResult.status === 'approved' ? 'approved' : 'pending',
       shipping_method: order.shipping_method,
@@ -140,6 +153,11 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       status: mpResult.status,
+      pix: isPix ? {
+        paymentId: String(mpResult.id),
+        qrCode: upsellOrder.pix_qr_code,
+        qrCodeBase64: upsellOrder.pix_qr_code_base64,
+      } : null,
     });
 
   } catch (err) {

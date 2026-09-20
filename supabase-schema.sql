@@ -52,3 +52,6 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS upsell_of UUID;
 CREATE INDEX IF NOT EXISTS idx_orders_upsell_of ON orders (upsell_of);
 -- Garante no banco que cada pedido recebe no máximo um upsell
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_orders_upsell_of ON orders (upsell_of) WHERE upsell_of IS NOT NULL;
+
+-- Upsell no Pix: momento em que a oferta foi exibida (o prazo de 5 min conta a partir daí)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS upsell_offered_at TIMESTAMP WITH TIME ZONE;

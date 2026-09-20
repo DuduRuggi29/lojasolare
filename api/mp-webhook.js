@@ -114,16 +114,18 @@ export default async function handler(req, res) {
           orderId: order.id,
         });
 
-        schedulePostPurchaseEmails({
-          customerName:  order.customer_name,
-          customerEmail: order.customer_email,
-          orderId:       order.id,
-        }).catch(e => console.error('Post-purchase emails (webhook) failed:', e));
+        if (!order.upsell_of) {
+          schedulePostPurchaseEmails({
+            customerName:  order.customer_name,
+            customerEmail: order.customer_email,
+            orderId:       order.id,
+          }).catch(e => console.error('Post-purchase emails (webhook) failed:', e));
 
-        await sendWhatsAppApproved({
-          customerName:  order.customer_name,
-          customerPhone: order.customer_phone,
-        }).catch(e => console.error('WhatsApp notification (webhook) failed:', e));
+          await sendWhatsAppApproved({
+            customerName:  order.customer_name,
+            customerPhone: order.customer_phone,
+          }).catch(e => console.error('WhatsApp notification (webhook) failed:', e));
+        }
 
         // Meta CAPI Purchase (especially important for Pix — browser pixel may not fire)
         const nameParts = (order.customer_name || '').trim().split(/\s+/);
@@ -150,7 +152,7 @@ export default async function handler(req, res) {
           },
           eventId: `purchase-${paymentId}`,
         }).catch(e => console.error('Meta CAPI Purchase (webhook) failed:', e));
-      } else if (newStatus === 'cancelled') {
+      } else if (newStatus === 'cancelled' && !order.upsell_of) {
         await notifyPixExpired({
           customerName: order.customer_name,
           customerEmail: order.customer_email,

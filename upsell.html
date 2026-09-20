@@ -81,6 +81,11 @@
         .cvv-hint { grid-column: 1 / -1; font-size: 12px; color: #6b7280; }
         .timer { font-weight: 800; color: #dc2626; font-size: 16px; margin-bottom: 20px; }
         .form-error { color: #dc2626; font-size: 14px; font-weight: 600; margin: 0 0 12px; display: none; }
+        .pix-box { display: none; text-align: center; margin: 0 0 15px; }
+        .pix-box img { width: 200px; height: 200px; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px; }
+        .pix-box textarea { width: 100%; height: 70px; font-size: 12px; border: 2px solid #d1d5db; border-radius: 10px; padding: 8px; margin: 10px 0; resize: none; }
+        .pix-box .btn-copy { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 12px 20px; font-weight: 700; cursor: pointer; }
+        .pix-status { font-size: 14px; color: #6b7280; margin-top: 10px; }
         .btn-upsell:disabled { opacity: .6; cursor: not-allowed; animation: none; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
@@ -136,6 +141,13 @@
                 </div>
                 <p class="cvv-hint"><i class="fas fa-lock"></i> Cobrança única de R$ 49,90 em 1x. Pagamento seguro pelo Mercado Pago; os dados do cartão não ficam salvos na loja.</p>
             </div>
+            <div class="pix-box" id="pix-box">
+                <p style="font-weight:700; margin-bottom:10px;">Escaneie o QR Code ou copie o código Pix de R$ 49,90:</p>
+                <img id="pix-qr" alt="QR Code Pix">
+                <textarea id="pix-code" readonly></textarea>
+                <button class="btn-copy" onclick="copyPix()">Copiar código Pix</button>
+                <p class="pix-status"><i class="fas fa-spinner fa-spin"></i> Aguardando o pagamento... esta página confirma sozinha.</p>
+            </div>
             <p class="form-error" id="form-error"></p>
 
             <button id="btn-upsell" onclick="processUpsell()" class="btn-upsell" disabled>
@@ -165,14 +177,14 @@
         const orderId = params.get('orderId');
         const THANKS = 'obrigado.html?status=approved';
 
-        let mp = null, expiresAt = 0, submitting = false, timerId = null;
+        let mp = null, expiresAt = 0, submitting = false, timerId = null, method = 'card', pollId = null;
         const btn = document.getElementById('btn-upsell');
         const errorEl = document.getElementById('form-error');
         const $ = id => document.getElementById(id);
         const digits = v => String(v || '').replace(/\D/g, '');
 
         function showError(msg) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
-        function go(url) { clearInterval(timerId); window.location.href = url; }
+        function go(url) { clearInterval(timerId); clearInterval(pollId); window.location.href = url; }
 
         function tick() {
             const left = Math.max(0, expiresAt - Date.now());
@@ -202,7 +214,16 @@
                 if (!res.ok) return go(THANKS); // sem oferta (expirada, já usada, pedido inválido)
                 const info = await res.json();
                 expiresAt = info.expiresAt;
-                mp = new MercadoPago(info.publicKey, { locale: 'pt-BR' });
+                method = info.method;
+
+                if (method === 'pix') {
+                    document.querySelector('.card-form').style.display = 'none';
+                    btn.firstChild.textContent = 'SIM! GERAR PIX DE R$ 49,90\n                ';
+                    btn.querySelector('span').textContent = 'Pagamento único via Pix, sem taxas';
+                    if (info.pix) showPix(info.pix);
+                } else {
+                    mp = new MercadoPago(info.publicKey, { locale: 'pt-BR' });
+                }
 
                 tick();
                 timerId = setInterval(tick, 1000);
@@ -213,8 +234,59 @@
             }
         }
 
+        function showPix(pix) {
+            $('pix-qr').src = 'data:image/png;base64,' + pix.qrCodeBase64;
+            $('pix-code').value = pix.qrCode;
+            $('pix-box').style.display = 'block';
+            btn.style.display = 'none';
+            pollId = setInterval(async () => {
+                try {
+                    const r = await fetch('/api/check-payment-status?payment_id=' + encodeURIComponent(pix.paymentId));
+                    const d = await r.json();
+                    if (d.status === 'approved') {
+                        if (typeof fbq !== 'undefined') fbq('trackCustom', 'UpsellAccepted', { value: 49.90, currency: 'BRL' });
+                        go(THANKS + '&upsell=true');
+                    }
+                } catch (_) { /* tenta de novo no próximo ciclo */ }
+            }, 4000);
+        }
+
+        function copyPix() {
+            navigator.clipboard.writeText($('pix-code').value).then(() => alert('Código Pix copiado!'));
+        }
+
+        async function processUpsellPix() {
+            submitting = true;
+            btn.disabled = true;
+            errorEl.style.display = 'none';
+            try {
+                const response = await fetch('/api/process-upsell', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                });
+                const result = await response.json();
+                if (result.success && result.pix && result.pix.qrCode) {
+                    showPix(result.pix);
+                } else if ([403, 409, 410].includes(response.status)) {
+                    go(THANKS);
+                } else {
+                    showError('Não foi possível gerar o Pix agora. Tente novamente ou continue sem a oferta.');
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error('Upsell pix error:', err);
+                showError('Não foi possível gerar o Pix agora. Tente novamente ou continue sem a oferta.');
+                btn.disabled = false;
+            } finally {
+                submitting = false;
+            }
+        }
+
         async function processUpsell() {
-            if (submitting || !mp) return;
+            if (submitting) return;
+            if (method === 'pix') return processUpsellPix();
+            if (!mp) return;
 
             const number = digits($('card-number').value);
             const expiry = $('card-expiry').value;
