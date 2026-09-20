@@ -13,10 +13,6 @@ export async function loadEligibleOrder(supabase, orderId) {
   if (order.status !== 'approved' || order.payment_method === 'pix' || order.upsell_of) {
     return { status: 403, error: 'Oferta indisponível para este pedido.' };
   }
-  if (!order.mp_customer_id || !order.mp_card_id || !order.mp_card_payment_method) {
-    return { status: 400, error: 'Cartão não disponível para esta oferta.' };
-  }
-
   const expiresAt = new Date(order.created_at).getTime() + UPSELL_WINDOW_MS;
   if (Date.now() > expiresAt) return { status: 410, error: 'Oferta expirada.' };
 

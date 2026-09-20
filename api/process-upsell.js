@@ -11,8 +11,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { orderId, token } = req.body || {};
-    if (!orderId || !token) return res.status(400).json({ error: 'Missing orderId or token' });
+    const { orderId, token, cardPaymentMethodId } = req.body || {};
+    if (!orderId || !token || !cardPaymentMethodId) return res.status(400).json({ error: 'Missing orderId, token or payment method' });
 
     // Pedido aprovado no cartão, com cartão salvo, dentro do prazo e sem upsell anterior
     const eligible = await loadEligibleOrder(supabase, orderId);
@@ -34,13 +34,17 @@ export default async function handler(req, res) {
       external_reference: `upsell-${orderId}-${Date.now()}`,
       notification_url: `${process.env.SITE_URL}/api/mp-webhook`,
       token,
-      payment_method_id: order.mp_card_payment_method,
+      payment_method_id: String(cardPaymentMethodId),
       installments: 1,
       capture: true,
       payer: {
-        type: 'customer',
-        id: order.mp_customer_id,
         email: order.customer_email,
+        first_name: firstName,
+        last_name: lastName,
+        identification: {
+          type: 'CPF',
+          number: String(order.customer_cpf || '').replace(/\D/g, ''),
+        },
       },
       additional_info: {
         items: [

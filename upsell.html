@@ -73,11 +73,12 @@
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .cvv-box { text-align: left; margin-bottom: 15px; }
-        .cvv-box label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-        #cvv-field { height: 48px; border: 2px solid #d1d5db; border-radius: 10px; padding: 0 12px; background: #fff; display: flex; align-items: center; }
-        #cvv-field iframe { height: 44px !important; }
-        .cvv-hint { font-size: 12px; color: #6b7280; margin-top: 6px; }
+        .card-form { text-align: left; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card-form .full { grid-column: 1 / -1; }
+        .card-form label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+        .card-form input { width: 100%; height: 46px; border: 2px solid #d1d5db; border-radius: 10px; padding: 0 12px; font-size: 16px; font-family: inherit; }
+        .card-form input:focus { outline: none; border-color: var(--primary); }
+        .cvv-hint { grid-column: 1 / -1; font-size: 12px; color: #6b7280; }
         .timer { font-weight: 800; color: #dc2626; font-size: 16px; margin-bottom: 20px; }
         .form-error { color: #dc2626; font-size: 14px; font-weight: 600; margin: 0 0 12px; display: none; }
         .btn-upsell:disabled { opacity: .6; cursor: not-allowed; animation: none; }
@@ -112,16 +113,34 @@
 
             <p class="timer">Oferta expira em <span id="countdown">--:--</span></p>
 
-            <div class="cvv-box">
-                <label for="cvv-field">Confirme o código de segurança (CVV) do cartão usado na compra</label>
-                <div id="cvv-field"></div>
-                <p class="cvv-hint"><i class="fas fa-lock"></i> Cobrado no mesmo cartão da compra, em 1x. Seus dados não são armazenados na loja.</p>
+            <div class="card-form">
+                <div class="full">
+                    <label for="card-number">Número do cartão</label>
+                    <input id="card-number" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="19">
+                </div>
+                <div class="full">
+                    <label for="card-holder">Nome impresso no cartão</label>
+                    <input id="card-holder" autocomplete="cc-name" placeholder="Como está no cartão">
+                </div>
+                <div>
+                    <label for="card-expiry">Validade</label>
+                    <input id="card-expiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5">
+                </div>
+                <div>
+                    <label for="card-cvv">CVV</label>
+                    <input id="card-cvv" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4">
+                </div>
+                <div class="full">
+                    <label for="card-cpf">CPF do titular</label>
+                    <input id="card-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14">
+                </div>
+                <p class="cvv-hint"><i class="fas fa-lock"></i> Cobrança única de R$ 49,90 em 1x. Pagamento seguro pelo Mercado Pago; os dados do cartão não ficam salvos na loja.</p>
             </div>
             <p class="form-error" id="form-error"></p>
 
             <button id="btn-upsell" onclick="processUpsell()" class="btn-upsell" disabled>
                 SIM! ADICIONAR AO MEU PEDIDO
-                <span>Confirmar com o CVV e finalizar</span>
+                <span>Confirmar dados do cartão e finalizar</span>
             </button>
 
             <button onclick="skipUpsell()" class="btn-no">Não obrigado, quero apenas o que já comprei.</button>
@@ -146,9 +165,11 @@
         const orderId = params.get('orderId');
         const THANKS = 'obrigado.html?status=approved';
 
-        let mp = null, cardId = null, expiresAt = 0, submitting = false, timerId = null;
+        let mp = null, expiresAt = 0, submitting = false, timerId = null;
         const btn = document.getElementById('btn-upsell');
         const errorEl = document.getElementById('form-error');
+        const $ = id => document.getElementById(id);
+        const digits = v => String(v || '').replace(/\D/g, '');
 
         function showError(msg) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
         function go(url) { clearInterval(timerId); window.location.href = url; }
@@ -157,21 +178,31 @@
             const left = Math.max(0, expiresAt - Date.now());
             const m = String(Math.floor(left / 60000)).padStart(2, '0');
             const s = String(Math.floor(left % 60000 / 1000)).padStart(2, '0');
-            document.getElementById('countdown').textContent = m + ':' + s;
+            $('countdown').textContent = m + ':' + s;
             if (left === 0) go(THANKS);
         }
+
+        // Máscaras simples
+        $('card-number').addEventListener('input', e => { e.target.value = digits(e.target.value).slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 '); });
+        $('card-expiry').addEventListener('input', e => { const d = digits(e.target.value).slice(0, 4); e.target.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d; });
+        $('card-cvv').addEventListener('input', e => { e.target.value = digits(e.target.value).slice(0, 4); });
+        $('card-cpf').addEventListener('input', e => {
+            const d = digits(e.target.value).slice(0, 11);
+            e.target.value = d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        });
+        try {
+            const savedCpf = sessionStorage.getItem('solare_upsell_cpf');
+            if (savedCpf) $('card-cpf').value = savedCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        } catch (_) {}
 
         async function init() {
             if (!orderId) return go(THANKS);
             try {
                 const res = await fetch('/api/upsell-info?orderId=' + encodeURIComponent(orderId));
-                if (!res.ok) return go(THANKS); // sem oferta (expirada, já usada, sem cartão salvo)
+                if (!res.ok) return go(THANKS); // sem oferta (expirada, já usada, pedido inválido)
                 const info = await res.json();
-                cardId = info.cardId;
                 expiresAt = info.expiresAt;
-
                 mp = new MercadoPago(info.publicKey, { locale: 'pt-BR' });
-                mp.fields.create('securityCode', { placeholder: 'CVV' }).mount('cvv-field');
 
                 tick();
                 timerId = setInterval(tick, 1000);
@@ -183,42 +214,76 @@
         }
 
         async function processUpsell() {
-            if (submitting || !mp || !cardId) return;
+            if (submitting || !mp) return;
+
+            const number = digits($('card-number').value);
+            const expiry = $('card-expiry').value;
+            const cvv    = digits($('card-cvv').value);
+            const holder = $('card-holder').value.trim();
+            const cpf    = digits($('card-cpf').value);
+
+            errorEl.style.display = 'none';
+            if (number.length < 13) return showError('Número do cartão inválido.');
+            if (!holder) return showError('Informe o nome impresso no cartão.');
+            if (!/^\d{2}\/\d{2}$/.test(expiry)) return showError('Validade inválida. Use MM/AA.');
+            if (cvv.length < 3) return showError('CVV inválido.');
+            if (cpf.length !== 11) return showError('CPF inválido.');
+
             submitting = true;
             btn.disabled = true;
-            errorEl.style.display = 'none';
+            let redirected = false;
 
             try {
-                const tokenRes = await mp.fields.createCardToken({ cardId });
+                let cardPaymentMethodId = 'visa';
+                try {
+                    const pm = await mp.getPaymentMethods({ bin: number.slice(0, 6) });
+                    if (pm && pm.results && pm.results[0] && pm.results[0].id) cardPaymentMethodId = pm.results[0].id;
+                } catch (_) { /* usa visa como fallback */ }
+
+                const [expMonth, expYear2] = expiry.split('/');
+                const tokenRes = await mp.createCardToken({
+                    cardNumber: number,
+                    cardholderName: holder.toUpperCase(),
+                    cardExpirationMonth: expMonth,
+                    cardExpirationYear: '20' + expYear2,
+                    securityCode: cvv,
+                    identificationType: 'CPF',
+                    identificationNumber: cpf,
+                });
                 if (!tokenRes || !tokenRes.id) {
-                    showError('Confira o CVV e tente novamente.');
+                    showError((tokenRes && tokenRes.cause && tokenRes.cause[0] && tokenRes.cause[0].description) || 'Confira os dados do cartão.');
                     return;
                 }
 
-                document.getElementById('loading-overlay').style.display = 'flex';
+                $('loading-overlay').style.display = 'flex';
                 const response = await fetch('/api/process-upsell', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, token: tokenRes.id })
+                    body: JSON.stringify({ orderId, token: tokenRes.id, cardPaymentMethodId })
                 });
                 const result = await response.json();
 
                 if (result.success) {
+                    redirected = true;
                     if (typeof fbq !== 'undefined') fbq('trackCustom', 'UpsellAccepted', { value: 49.90, currency: 'BRL' });
                     go(THANKS + (result.status === 'approved' ? '&upsell=true' : '&upsell=pending'));
                 } else if (response.status === 400 && result.error === 'Upsell payment failed') {
-                    document.getElementById('loading-overlay').style.display = 'none';
-                    showError('O pagamento da oferta não foi aprovado. Confira o CVV ou continue sem a oferta (sua compra já está garantida).');
+                    $('loading-overlay').style.display = 'none';
+                    showError('O pagamento da oferta não foi aprovado. Confira os dados ou use outro cartão, ou continue sem a oferta (sua compra já está garantida).');
+                } else if (response.status === 409 || response.status === 410 || response.status === 403) {
+                    redirected = true;
+                    go(THANKS);
                 } else {
-                    go(THANKS + '&upsell=failed');
+                    $('loading-overlay').style.display = 'none';
+                    showError('Não foi possível concluir agora. Tente novamente ou continue sem a oferta.');
                 }
             } catch (err) {
                 console.error('Upsell error:', err);
-                document.getElementById('loading-overlay').style.display = 'none';
-                showError('Não foi possível concluir agora. Confira o CVV e tente novamente, ou continue sem a oferta.');
+                $('loading-overlay').style.display = 'none';
+                showError('Não foi possível concluir agora. Confira os dados e tente novamente, ou continue sem a oferta.');
             } finally {
                 submitting = false;
-                if (!document.getElementById('loading-overlay').style.display.includes('flex')) btn.disabled = false;
+                if (!redirected) btn.disabled = false;
             }
         }
 
