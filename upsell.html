@@ -172,6 +172,7 @@
     </div>
 
     <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
         const orderId = params.get('orderId');
@@ -331,7 +332,7 @@
                 const response = await fetch('/api/process-upsell', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, token: tokenRes.id, cardPaymentMethodId })
+                    body: JSON.stringify({ orderId, token: tokenRes.id, cardPaymentMethodId, deviceId: window.MP_DEVICE_SESSION_ID || null })
                 });
                 const result = await response.json();
 

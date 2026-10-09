@@ -30,6 +30,7 @@ export default async function handler(req, res) {
       installments,
       shippingMethod,
       shippingPrice,
+      deviceId,
     } = req.body;
 
     // ── Validação ──────────────────────────────────────────
@@ -147,6 +148,8 @@ export default async function handler(req, res) {
         'Authorization':    `Bearer ${MP_ACCESS_TOKEN}`,
         'Content-Type':     'application/json',
         'X-Idempotency-Key': `solare-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        // Ajuda o antifraude do MP a avaliar melhor a transação. Opcional: se não vier, o pagamento segue normalmente.
+        ...(deviceId ? { 'X-meta-session-id': String(deviceId) } : {}),
       },
       body: JSON.stringify(paymentBody),
     });

@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    const { orderId, token, cardPaymentMethodId } = req.body || {};
+    const { orderId, token, cardPaymentMethodId, deviceId } = req.body || {};
     if (!orderId) return res.status(400).json({ error: 'Missing orderId' });
 
     // Pedido aprovado no cartão, com cartão salvo, dentro do prazo e sem upsell anterior
@@ -99,6 +99,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
         'X-Idempotency-Key': isPix ? `upsell-pix-${orderId}` : `upsell-${orderId}-${token}`,
+        ...(deviceId ? { 'X-meta-session-id': String(deviceId) } : {}),
       },
       body: JSON.stringify(paymentData),
     });
