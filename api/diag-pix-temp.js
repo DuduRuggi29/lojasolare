@@ -52,6 +52,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       account: { id: me.id, email: me.email, site_id: me.site_id },
+      siteUrl: process.env.SITE_URL || null,
+      webhookUrlUsedInPayments: `${process.env.SITE_URL}/api/mp-webhook`,
+      hasWebhookSecret: !!process.env.MP_WEBHOOK_SECRET,
       checked: results.length,
       results,
     });
