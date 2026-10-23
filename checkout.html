@@ -1670,6 +1670,14 @@
                 const dest = (result.orderId && result.upsellAvailable)
                     ? `/upsell.html?orderId=${result.orderId}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'conversion', {
+                        'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+                        'value': total,
+                        'currency': 'BRL',
+                        'transaction_id': String(result.id || '')
+                    });
+                }
                 setTimeout(function() { window.location.href = dest; }, 1500);
             } else {
                 const reason = result.error || 'Verifique os dados ou o limite do cartão.';
@@ -1728,7 +1736,20 @@
                 const reminderParam    = result.pix_reminder_id    ? `&reminder_id=${encodeURIComponent(result.pix_reminder_id)}`       : '';
                 const reminder2hParam  = result.pix_reminder_2h_id ? `&reminder_2h_id=${encodeURIComponent(result.pix_reminder_2h_id)}` : '';
                 const reminder4hParam  = result.pix_reminder_4h_id ? `&reminder_4h_id=${encodeURIComponent(result.pix_reminder_4h_id)}` : '';
-                window.location.href = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}${reminderParam}${reminder2hParam}${reminder4hParam}`;
+                const pixDest = `/obrigado.html?status=pending&type=pix&id=${result.id}&total=${pixTotal}&qr_code=${encodeURIComponent(result.qr_code)}&qr_code_base64=${encodeURIComponent(result.qr_code_base64 || '')}${reminderParam}${reminder2hParam}${reminder4hParam}`;
+                // Conta como "Compra" ao gerar o Pix (não precisa estar pago)
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'conversion', {
+                        'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+                        'value': pixTotal,
+                        'currency': 'BRL',
+                        'transaction_id': String(result.id || ''),
+                        'event_callback': function() { window.location.href = pixDest; }
+                    });
+                    setTimeout(function() { window.location.href = pixDest; }, 1000);
+                } else {
+                    window.location.href = pixDest;
+                }
             } else {
                 const cause = result.error || 'Erro desconhecido';
                 console.error('Pix error:', result);
