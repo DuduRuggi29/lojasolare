@@ -88,19 +88,7 @@ window.handleCheckout = function() {
         oldPrice: currentSelectedOldPrice,
         light: currentSelectedLight,
     });
-    const dest = `checkout.html?${params.toString()}`;
-
-    if (typeof gtag !== 'undefined') {
-        console.log('[GAds] Iniciar finalização de compra ->', dest);
-        gtag('event', 'conversion', {
-            'send_to': 'AW-18531362289/MC_ZCKj7y6YdEPHLuIRF',
-            'value': 1.0,
-            'currency': 'BRL'
-        });
-    } else {
-        console.warn('[GAds] gtag não está definido no momento do clique');
-    }
-    setTimeout(function() { window.location.href = dest; }, 300);
+    window.location.href = `checkout.html?${params.toString()}`;
 };
 
 // Quantity and Price Logic
