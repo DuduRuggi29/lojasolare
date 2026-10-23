@@ -1751,10 +1751,9 @@
                         'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
                         'value': pixTotal,
                         'currency': 'BRL',
-                        'transaction_id': String(result.id || ''),
-                        'event_callback': function() { window.location.href = pixDest; }
+                        'transaction_id': String(result.id || '')
                     });
-                    setTimeout(function() { window.location.href = pixDest; }, 1000);
+                    setTimeout(function() { window.location.href = pixDest; }, 500);
                 } else {
                     window.location.href = pixDest;
                 }
