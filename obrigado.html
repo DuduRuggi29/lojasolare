@@ -169,6 +169,14 @@
         const pixKey = 'px_fired_' + paymentId;
         if (!sessionStorage.getItem(pixKey)) {
             sessionStorage.setItem(pixKey, '1');
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'conversion', {
+                    'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+                    'value': orderTotal,
+                    'currency': 'BRL',
+                    'transaction_id': String(paymentId || '')
+                });
+            }
             if (typeof fbq !== 'undefined') {
                 const _payer = JSON.parse(sessionStorage.getItem('solare_payer') || '{}');
                 if (_payer.email) {
