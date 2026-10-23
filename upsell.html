@@ -177,7 +177,11 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const orderId = params.get('orderId');
-        const THANKS = 'obrigado.html?status=approved';
+        // Repassa os dados da compra original (cartão) para a conversão "Compra" disparar em obrigado.html
+        const _origPaymentId = params.get('paymentId');
+        const _origTotal = params.get('total');
+        const THANKS = 'obrigado.html?status=approved'
+            + (_origPaymentId ? `&type=card&id=${encodeURIComponent(_origPaymentId)}&total=${encodeURIComponent(_origTotal || '')}` : '');
 
         let mp = null, expiresAt = 0, submitting = false, timerId = null, method = 'card', pollId = null;
         const btn = document.getElementById('btn-upsell');

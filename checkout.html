@@ -1675,17 +1675,10 @@
                     fbq('trackCustom','PurchaseNewClient',{value:total,currency:'BRL'},{eventID:`purchasenew-${result.id}`});
                     fbq('trackCustom','PurchaseCard',{value:total,currency:'BRL'},{eventID:`purchasecard-${result.id}`});
                 }
+                // Conta como "Compra" no carregamento de obrigado.html (type=card), não aqui
                 const dest = (result.orderId && result.upsellAvailable)
-                    ? `/upsell.html?orderId=${result.orderId}`
+                    ? `/upsell.html?orderId=${result.orderId}&paymentId=${result.id}&total=${total}`
                     : `/obrigado.html?id=${result.id}&type=card&total=${total}`;
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'conversion', {
-                        'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
-                        'value': total,
-                        'currency': 'BRL',
-                        'transaction_id': String(result.id || '')
-                    });
-                }
                 setTimeout(function() { window.location.href = dest; }, 1500);
             } else {
                 const reason = result.error || 'Verifique os dados ou o limite do cartão.';

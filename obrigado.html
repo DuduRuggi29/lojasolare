@@ -190,7 +190,21 @@
             }
         }
     }
-    // Cartão: NÃO dispara aqui — já foi disparado em checkout.html antes do redirect
+    // Cartão aprovado: dispara apenas UMA vez por payment_id (evita redisparo em refresh)
+    if (type === 'card' && paymentId) {
+        const cardKey = 'card_fired_' + paymentId;
+        if (!sessionStorage.getItem(cardKey)) {
+            sessionStorage.setItem(cardKey, '1');
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'conversion', {
+                    'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+                    'value': orderTotal,
+                    'currency': 'BRL',
+                    'transaction_id': String(paymentId || '')
+                });
+            }
+        }
+    }
 
     if (params.get('upsell') === 'pending') {
         document.getElementById('status-desc').innerText = 'Sua compra está confirmada. O pagamento da oferta adicional está em análise e você será avisado por e-mail.';
