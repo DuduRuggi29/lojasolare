@@ -88,7 +88,19 @@ window.handleCheckout = function() {
         oldPrice: currentSelectedOldPrice,
         light: currentSelectedLight,
     });
-    window.location.href = `checkout.html?${params.toString()}`;
+    const dest = `checkout.html?${params.toString()}`;
+
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'conversion', {
+            'send_to': 'AW-18531362289/MC_ZCKj7y6YdEPHLuIRF',
+            'value': 1.0,
+            'currency': 'BRL',
+            'event_callback': function() { window.location.href = dest; }
+        });
+        setTimeout(function() { window.location.href = dest; }, 1000);
+    } else {
+        window.location.href = dest;
+    }
 };
 
 // Quantity and Price Logic
