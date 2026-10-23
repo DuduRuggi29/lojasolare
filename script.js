@@ -91,16 +91,16 @@ window.handleCheckout = function() {
     const dest = `checkout.html?${params.toString()}`;
 
     if (typeof gtag !== 'undefined') {
+        console.log('[GAds] Iniciar finalização de compra ->', dest);
         gtag('event', 'conversion', {
             'send_to': 'AW-18531362289/MC_ZCKj7y6YdEPHLuIRF',
             'value': 1.0,
-            'currency': 'BRL',
-            'event_callback': function() { window.location.href = dest; }
+            'currency': 'BRL'
         });
-        setTimeout(function() { window.location.href = dest; }, 1000);
     } else {
-        window.location.href = dest;
+        console.warn('[GAds] gtag não está definido no momento do clique');
     }
+    setTimeout(function() { window.location.href = dest; }, 300);
 };
 
 // Quantity and Price Logic
