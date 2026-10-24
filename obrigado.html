@@ -12,27 +12,12 @@
     </script>
     <!-- Event snippet for Compra conversion page -->
     <script>
-      var gaParams = new URLSearchParams(window.location.search);
-      var gaType = gaParams.get('type');
-      var gaId = gaParams.get('id');
-      var gaAlreadyFired = gaId && sessionStorage.getItem('gads_compra_fired_' + gaId);
-      if ((gaType === 'pix' || gaType === 'card') && gaId && !gaAlreadyFired) {
-        sessionStorage.setItem('gads_compra_fired_' + gaId, '1');
-        var gaPayer = {};
-        try { gaPayer = JSON.parse(sessionStorage.getItem('solare_payer') || '{}'); } catch (e) {}
-        if (gaPayer.email || gaPayer.phone) {
-          gtag('set', 'user_data', {
-            'email': gaPayer.email || undefined,
-            'phone_number': gaPayer.phone ? ('+55' + gaPayer.phone) : undefined
-          });
-        }
-        gtag('event', 'conversion', {
-            'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
-            'value': parseFloat(gaParams.get('total') || '0'),
-            'currency': 'BRL',
-            'transaction_id': String(gaId)
-        });
-      }
+      gtag('event', 'conversion', {
+          'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+          'value': parseFloat(new URLSearchParams(window.location.search).get('total') || '1.0'),
+          'currency': 'BRL',
+          'transaction_id': new URLSearchParams(window.location.search).get('id') || ''
+      });
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
