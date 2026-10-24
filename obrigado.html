@@ -12,12 +12,13 @@
     </script>
     <!-- Event snippet for Compra conversion page -->
     <script>
-      gtag('event', 'conversion', {
+      var gaType = new URLSearchParams(window.location.search).get('type');
+      gaType === 'pix' || gaType === 'card' ? gtag('event', 'conversion', {
           'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
           'value': parseFloat(new URLSearchParams(window.location.search).get('total') || '1.0'),
           'currency': 'BRL',
           'transaction_id': new URLSearchParams(window.location.search).get('id') || ''
-      });
+      }) : null;
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
