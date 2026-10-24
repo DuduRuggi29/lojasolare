@@ -10,6 +10,28 @@
 
       gtag('config', 'AW-18531362289');
     </script>
+    <!-- Event snippet for Compra conversion page -->
+    <script>
+      (function() {
+        var _p = new URLSearchParams(window.location.search);
+        var _type = _p.get('type');
+        var _id = _p.get('id');
+        if ((_type === 'pix' || _type === 'card') && _id) {
+          var _key = 'gads_compra_fired_' + _id;
+          var _already = false;
+          try { _already = !!sessionStorage.getItem(_key); } catch (_) {}
+          if (!_already) {
+            try { sessionStorage.setItem(_key, '1'); } catch (_) {}
+            gtag('event', 'conversion', {
+                'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+                'value': parseFloat(_p.get('total') || '0'),
+                'currency': 'BRL',
+                'transaction_id': String(_id)
+            });
+          }
+        }
+      })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedido Confirmado — Solare</title>
@@ -165,18 +187,11 @@
     const orderTotal = parseFloat(params.get('total') || '0');
 
     // Pix: QR Code gerado — dispara apenas UMA vez por payment_id (evita redisparo em refresh)
+    // (a conversão "Compra" do Google Ads já dispara no <head>, separada daqui)
     if (type === 'pix' && status === 'pending' && paymentId) {
         const pixKey = 'px_fired_' + paymentId;
         if (!sessionStorage.getItem(pixKey)) {
             sessionStorage.setItem(pixKey, '1');
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'conversion', {
-                    'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
-                    'value': orderTotal,
-                    'currency': 'BRL',
-                    'transaction_id': String(paymentId || '')
-                });
-            }
             if (typeof fbq !== 'undefined') {
                 const _payer = JSON.parse(sessionStorage.getItem('solare_payer') || '{}');
                 if (_payer.email) {
@@ -190,21 +205,7 @@
             }
         }
     }
-    // Cartão aprovado: dispara apenas UMA vez por payment_id (evita redisparo em refresh)
-    if (type === 'card' && paymentId) {
-        const cardKey = 'card_fired_' + paymentId;
-        if (!sessionStorage.getItem(cardKey)) {
-            sessionStorage.setItem(cardKey, '1');
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'conversion', {
-                    'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
-                    'value': orderTotal,
-                    'currency': 'BRL',
-                    'transaction_id': String(paymentId || '')
-                });
-            }
-        }
-    }
+    // Cartão aprovado: a conversão "Compra" do Google Ads já dispara no <head>
 
     if (params.get('upsell') === 'pending') {
         document.getElementById('status-desc').innerText = 'Sua compra está confirmada. O pagamento da oferta adicional está em análise e você será avisado por e-mail.';
