@@ -12,25 +12,27 @@
     </script>
     <!-- Event snippet for Compra conversion page -->
     <script>
-      (function() {
-        var _p = new URLSearchParams(window.location.search);
-        var _type = _p.get('type');
-        var _id = _p.get('id');
-        if ((_type === 'pix' || _type === 'card') && _id) {
-          var _key = 'gads_compra_fired_' + _id;
-          var _already = false;
-          try { _already = !!sessionStorage.getItem(_key); } catch (_) {}
-          if (!_already) {
-            try { sessionStorage.setItem(_key, '1'); } catch (_) {}
-            gtag('event', 'conversion', {
-                'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
-                'value': parseFloat(_p.get('total') || '0'),
-                'currency': 'BRL',
-                'transaction_id': String(_id)
-            });
-          }
+      var gaParams = new URLSearchParams(window.location.search);
+      var gaType = gaParams.get('type');
+      var gaId = gaParams.get('id');
+      var gaAlreadyFired = gaId && sessionStorage.getItem('gads_compra_fired_' + gaId);
+      if ((gaType === 'pix' || gaType === 'card') && gaId && !gaAlreadyFired) {
+        sessionStorage.setItem('gads_compra_fired_' + gaId, '1');
+        var gaPayer = {};
+        try { gaPayer = JSON.parse(sessionStorage.getItem('solare_payer') || '{}'); } catch (e) {}
+        if (gaPayer.email || gaPayer.phone) {
+          gtag('set', 'user_data', {
+            'email': gaPayer.email || undefined,
+            'phone_number': gaPayer.phone ? ('+55' + gaPayer.phone) : undefined
+          });
         }
-      })();
+        gtag('event', 'conversion', {
+            'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
+            'value': parseFloat(gaParams.get('total') || '0'),
+            'currency': 'BRL',
+            'transaction_id': String(gaId)
+        });
+      }
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
