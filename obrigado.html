@@ -13,15 +13,12 @@
     <!-- Event snippet for Compra conversion page -->
     <script>
       var gaType = new URLSearchParams(window.location.search).get('type');
-      var gaId = new URLSearchParams(window.location.search).get('id');
-      var gaDup = gaId ? sessionStorage.getItem('gads_compra_fired_' + gaId) : null;
-      (gaType === 'pix' || gaType === 'card') && gaId && !gaDup ? gtag('event', 'conversion', {
+      gaType === 'pix' || gaType === 'card' ? gtag('event', 'conversion', {
           'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
           'value': parseFloat(new URLSearchParams(window.location.search).get('total') || '1.0'),
           'currency': 'BRL',
-          'transaction_id': gaId || ''
+          'transaction_id': new URLSearchParams(window.location.search).get('id') || ''
       }) : null;
-      if (gaId && !gaDup) { sessionStorage.setItem('gads_compra_fired_' + gaId, '1'); }
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
