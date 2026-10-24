@@ -22,12 +22,6 @@
           try { _already = !!sessionStorage.getItem(_key); } catch (_) {}
           if (!_already) {
             try { sessionStorage.setItem(_key, '1'); } catch (_) {}
-            window.addEventListener('DOMContentLoaded', function() {
-              var b = document.createElement('div');
-              b.textContent = '[DEBUG TEMP] Tag de Compra disparada — ID ' + _id;
-              b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;font-weight:700;text-align:center;padding:10px;font-size:14px;';
-              document.body.prepend(b);
-            });
             gtag('event', 'conversion', {
                 'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
                 'value': parseFloat(_p.get('total') || '0'),
