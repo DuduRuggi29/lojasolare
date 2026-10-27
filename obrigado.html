@@ -1,25 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18531362289"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'AW-18531362289');
-    </script>
-    <!-- Event snippet for Compra conversion page -->
-    <script>
-      var gaType = new URLSearchParams(window.location.search).get('type');
-      gaType === 'pix' || gaType === 'card' ? gtag('event', 'conversion', {
-          'send_to': 'AW-18531362289/7UN2CNbTwaYdEPHLuIRF',
-          'value': parseFloat(new URLSearchParams(window.location.search).get('total') || '1.0'),
-          'currency': 'BRL',
-          'transaction_id': new URLSearchParams(window.location.search).get('id') || ''
-      }) : null;
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedido Confirmado — Solare</title>
@@ -175,7 +156,6 @@
     const orderTotal = parseFloat(params.get('total') || '0');
 
     // Pix: QR Code gerado — dispara apenas UMA vez por payment_id (evita redisparo em refresh)
-    // (a conversão "Compra" do Google Ads já dispara no <head>, separada daqui)
     if (type === 'pix' && status === 'pending' && paymentId) {
         const pixKey = 'px_fired_' + paymentId;
         if (!sessionStorage.getItem(pixKey)) {
@@ -193,7 +173,6 @@
             }
         }
     }
-    // Cartão aprovado: a conversão "Compra" do Google Ads já dispara no <head>
 
     if (params.get('upsell') === 'pending') {
         document.getElementById('status-desc').innerText = 'Sua compra está confirmada. O pagamento da oferta adicional está em análise e você será avisado por e-mail.';
