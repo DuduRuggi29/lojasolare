@@ -66,29 +66,13 @@ let currentKitMultiplier = 1;
 // Wire "Comprar Agora" button to checkout page
 // Reads directly from the active DOM elements to avoid stale state
 window.handleCheckout = function() {
-    // Read light from active variant button
-    const activeLight = document.querySelector('.variant-btn.active[data-value]');
-    if (activeLight) {
-        currentSelectedLight = activeLight.getAttribute('data-value');
+    // Loja antiga desativada: avisa o cliente e direciona para o novo site
+    const overlay = document.getElementById('site-moved-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    } else {
+        window.location.href = 'https://solareluminarias.com.br';
     }
-
-    if (typeof fbq !== 'undefined') {
-        fbq('track', 'AddToCart', {
-            content_name: 'Luminária Solar Solare',
-            content_ids: ['solare-luminaria'],
-            content_type: 'product',
-            value: currentSelectedPrice,
-            currency: 'BRL',
-            num_items: currentSelectedQty,
-        });
-    }
-    const params = new URLSearchParams({
-        qty: currentSelectedQty,
-        price: currentSelectedPrice,
-        oldPrice: currentSelectedOldPrice,
-        light: currentSelectedLight,
-    });
-    window.location.href = `checkout.html?${params.toString()}`;
 };
 
 // Quantity and Price Logic

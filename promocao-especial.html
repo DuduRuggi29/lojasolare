@@ -785,6 +785,27 @@
         </div>
     </footer>
 
+    <!-- Aviso de mudança de loja -->
+    <div class="site-moved-overlay" id="site-moved-overlay">
+        <div class="site-moved-box">
+            <button class="site-moved-close" onclick="document.getElementById('site-moved-overlay').classList.remove('active')" aria-label="Fechar">&times;</button>
+            <div class="site-moved-icon">🎉</div>
+            <h2>Mudamos de endereço!</h2>
+            <p>Estamos agora em um site novo, mais rápido e moderno, com as mesmas luminárias solares. Clique abaixo para garantir a sua:</p>
+            <a class="site-moved-btn" href="https://solareluminarias.com.br">Ir para a Solare Luminárias →</a>
+        </div>
+    </div>
+    <style>
+        .site-moved-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:99999; align-items:center; justify-content:center; padding:20px; }
+        .site-moved-overlay.active { display:flex; }
+        .site-moved-box { background:#fff; border-radius:16px; max-width:420px; width:100%; padding:36px 28px; text-align:center; position:relative; box-shadow:0 20px 60px rgba(0,0,0,.3); font-family:'Inter',sans-serif; }
+        .site-moved-close { position:absolute; top:10px; right:14px; background:none; border:none; font-size:26px; color:#999; cursor:pointer; line-height:1; }
+        .site-moved-icon { font-size:40px; margin-bottom:12px; }
+        .site-moved-box h2 { color:var(--primary-color,#1A3C34); font-size:22px; margin-bottom:12px; font-weight:800; }
+        .site-moved-box p { color:#555; font-size:15px; line-height:1.5; margin-bottom:24px; }
+        .site-moved-btn { display:inline-block; background:var(--primary-color,#1A3C34); color:#fff; text-decoration:none; font-weight:700; padding:16px 28px; border-radius:10px; font-size:16px; transition:background .2s; }
+        .site-moved-btn:hover { background:var(--primary-light,#2A5A4E); }
+    </style>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js" defer></script>
     <script src="script.js?v=2.1" defer></script>
     <script>
